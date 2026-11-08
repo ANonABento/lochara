@@ -80,7 +80,7 @@ at about $20. It also needs Blender 5.2, the VRM add-on and Blender MCP.
 | **AssetFurnace** (Bingeljell/image-to-3dlab, Apache-2.0) | Local studio around several picture → 3D engines; Finish (cleanup to a set triangle count, compression); SkinTokens auto-rig; MCP server for agents. | **Installed** in `vendor/assetfurnace`, v0.5.7 plus our patch (`third_party/assetfurnace/`). |
 | ↳ its other tools | `photo_paint` paints a model with the real pixels of its source pictures; a front + back route (Pixal3D) with a Qwen-Image-Edit back drawer; a "hero" route that builds the head on its own and grafts it on; background removal (BiRefNet). | The pieces the generated route (`docs/plans/`) builds on. |
 | ↳ Hunyuan3D-MLX (Xiong) | Shape plus painted texture, about 20 min per part. 13.9 GB. Tencent licence (not the EU, UK or South Korea). | **Works.** Ear unit test: clean from all sides. |
-| ↳ Pixal3D | AssetFurnace's best engine; can paint the source picture's real pixels back onto the model. 8.6 GB, MIT. | Needs full **Xcode** to compile (only Command Line Tools here). |
+| ↳ Pixal3D | AssetFurnace's best engine; can paint the source picture's real pixels back onto the model. 8.6 GB, MIT. | AssetFurnace's build needs full **Xcode**; ComfyUI's PyTorch port (multiview: front, left, back, right) runs without it. |
 | ↳ TRELLIS.2 | Highest fidelity. 16.7 GB, MIT. | Needs Meta to approve **DINOv3 access** on Hugging Face. |
 | ↳ SkinTokens auto-rig | Skeleton plus weights for a generated humanoid. 1.5 GB, MIT. | Not installed. Only needed if we ever generate a whole body. |
 | **trellis-mac** | TRELLIS.2 on its own, on the Mac's GPU; about 18 GB peak memory, colours on vertices. | Superseded by AssetFurnace. |

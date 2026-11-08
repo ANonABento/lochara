@@ -50,7 +50,7 @@ What I need, in any form:
 Head + hair and the T-posed body in 4 views, plus 3 balance views. Kevin reviews them.
 
 ### 3. 3D (spike S2)
-Hair, outfit and robot shells from the 4 views with Hunyuan3D-2mv. Kevin picks.
+Hair, outfit and robot shells from the 4 views (Pixal3D multiview or Hunyuan3D-2mv, in ComfyUI). Kevin picks.
 
 ### 4. Cut and split (S3)
 Hair from head; body cut at the joints into rigid shells; dress, apron and skirt kept as the skinned group.
@@ -74,9 +74,8 @@ Skirt and hair springs (S6), the VTuber VRM (`targets.md`), more expressions.
 | | Needs | Rough effort |
 |---|---|---|
 | Design | Kevin | open |
-| Hunyuan3D-2mv setup | a download (size and licence stated first) | an hour |
 | S1 views | design | a session |
-| S2 3D | views, Hunyuan3D-2mv | a session (≈20 min per model) |
+| S2 3D | views | a session (≈20 min per model) |
 | S3–S5 | candidates | a session each |
 | S6 rig, prologue check | the above | a session |
 

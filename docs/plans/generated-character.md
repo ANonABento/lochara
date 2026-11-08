@@ -56,7 +56,7 @@ also get the approved front.
 
 | Job | Model | Runs with |
 |---|---|---|
-| Views from the design | **Qwen-Image-Edit 2511** + a turnaround LoRA (Civitai "Character Turnaround Sheet", for 2509/2511) | `mflux-generate-qwen-edit` (installed; the weights are a download) |
+| Views from the design | **Qwen-Image-Edit 2511** (4-bit) + the **Multiple-Angles LoRA** (set camera angle per view) + the **Lightning LoRA** (4–8 steps) | `mflux-generate-qwen-edit` |
 | Concepts, anime finish | **Illustrious XL 2.0** (SDXL anime) + style LoRAs | ComfyUI |
 | Quick drafts | FLUX.2 klein (installed) | mflux |
 | Bring your own | any tool, or your own hand | drop PNGs into `views/` |
@@ -79,10 +79,11 @@ budget and previewed from four sides.
 
 | Engine | Input | Notes |
 |---|---|---|
-| **Hunyuan3D-2mv** | front, left, back, right | The local match for Tripo's multiview (what Charakuru uses). Shape only, which is all we need. Runs in ComfyUI on the Mac GPU. **First choice** (spike S2). |
+| **Pixal3D multiview** | front, left, back, right | ComfyUI's own PyTorch port (template `3d_pixal3d_multi_views`): shape *and* texture painted from the views, plus decimate, remesh and UV atlas nodes. No Xcode. MIT. |
+| **Hunyuan3D-2mv** | front, left, back, right | ComfyUI template `3d_hunyuan3d_multiview_to_model`. Shape only. Tencent licence. |
 | Hunyuan3D-MLX (AssetFurnace) | front | Works today (the ear). For small rigid parts. |
 
-Pixal3D and TRELLIS.2 are out: on a Mac both need Xcode, which needs an Apple ID.
+Spike S2 compares the two multiview engines on the same views.
 
 For the hair and outfit, the views are masked to just that piece (the head views without the face for hair; the body
 views as they are for the outfit), so the engine builds only what will be used.
@@ -139,9 +140,9 @@ contract and budget checked. Name, author and licence come from `character.json`
   "profile": "anime-avatar",
   "design": {"picture": "design/front.png", "brief": "design/design.md", "lora": "design/lora.safetensors"},
   "template": {"file": "assets/AvatarSample_E.vrm", "keep": ["body", "face"]},
-  "views": {"engine": "qwen-edit-2511", "loras": ["turnaround"], "seed": 3},
-  "model": {"hair": {"engine": "hunyuan-2mv", "pick": "hair-2", "triangles": 8000},
-            "outfit": {"engine": "hunyuan-2mv", "pick": "outfit-1", "triangles": 15000}},
+  "views": {"engine": "qwen-edit-2511", "loras": ["multiple-angles", "lightning-8"], "seed": 3},
+  "model": {"hair": {"engine": "pixal3d-mv", "pick": "hair-2", "triangles": 8000},
+            "outfit": {"engine": "pixal3d-mv", "pick": "outfit-1", "triangles": 15000}},
   "split": {"groups": {"hair_back": [...], "skirt": [...]}, "moving": ["hair_back", "skirt"]},
   "fit": {"height": 1.55, "head": 1.0, "arms": 1.0, "legs": 1.0},
   "springs": [{"group": "skirt", "stiffness": 1.0, "gravity": 0.15, "drag": 0.4}],
@@ -157,8 +158,8 @@ works here.
 
 | | Question | Done when |
 |---|---|---|
-| S1 views | Can Qwen-Image-Edit 2511 (+ turnaround LoRA) make 4 consistent views of the head and the T-posed body from one design picture? | 8 views a human would accept, under 10 tries each. |
-| S2 3D | Hunyuan3D-2mv on the hair and the outfit: are the sides and back right, are locks and skirt separate? | One hair and one outfit we'd keep. |
+| S1 views | Can Qwen-Image-Edit 2511 (+ the angles and Lightning LoRAs) make 4 consistent views of the head and the T-posed body from one design picture? | 8 views a human would accept, under 10 tries each. |
+| S2 3D | Pixal3D multiview vs Hunyuan3D-2mv on the hair and the outfit: are the sides and back right, are locks and skirt separate? | One hair and one outfit we'd keep. |
 | S3 split | Does projecting per-view labels give clean groups? | Groups match the pictures from 4 sides. |
 | S4 paint | Projected pixels on the hair, outfit and the template face. | Renders that read as the design. |
 | S5 fit + rig | Template fitted, clothing weighted: clean bends? | Bend renders with no tearing. |
