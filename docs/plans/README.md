@@ -11,6 +11,6 @@
 ## Smaller items
 - Spring bones from VRM bases are dropped today (VRM-only data). Keep them when the output is VRM.
 - Report the AssetFurnace engine-lookup bug upstream and drop `third_party/assetfurnace/backend-spec.patch`.
-- Pixal3D (needs full Xcode) and TRELLIS.2 (needs DINOv3 access) as engines; Hunyuan's licence excludes the EU, UK
-  and South Korea.
+- Hunyuan3D-2mv (multiview) as an engine; Pixal3D and TRELLIS.2 only if needed (both need full Xcode on a Mac).
+  Hunyuan's licence excludes the EU, UK and South Korea.
 - `examples/robot-maid`: retune the generated ear (its antenna is hidden in the hair).

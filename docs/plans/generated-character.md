@@ -65,9 +65,10 @@ engines), each Finished to a triangle budget and previewed from four sides.
 
 | Engine | Input | Status here |
 |---|---|---|
-| Pixal3D | front + back | Best results; AssetFurnace's own front+back route. **Needs full Xcode** to compile (free, App Store). |
-| Hunyuan3D-MLX | front | Works today. Single view, so the back is invented. |
-| TRELLIS.2 | front | Needs Meta's DINOv3 approval. |
+| **Hunyuan3D-2mv** | front, left, back, right | The closest local match to Tripo's multiview, which Charakuru uses. Shape only: the texture comes from our own pictures (step 5) anyway. PyTorch on the Mac GPU (MPS) or ComfyUI; no Xcode. Tencent licence. **First choice** (spike S2). |
+| Hunyuan3D-MLX | front | Works today. Single view, so the sides and back are invented. |
+| Pixal3D | front + back | AssetFurnace's best single-character route, but its Metal kernels need full Xcode (free from developer.apple.com as a .xip; no App Store needed). Only if 2mv disappoints. |
+| TRELLIS.2 | front | Also needs Xcode on a Mac, and Meta's DINOv3 approval. |
 
 *Checkpoint:* pick one head and one body (turntable and wireframe in the contact sheet).
 
@@ -139,8 +140,8 @@ GLB (as today, with the contract check and the size budget), plus VRM 1.0 with n
   "route": "generated",                         // "restyle" is today's route
   "design": {"picture": "design/front.png", "brief": "design/design.md"},
   "views": {"engine": "flux2-klein-edit", "seed": 3},
-  "model": {"head": {"engine": "pixal3d", "pick": "head-2", "triangles": 12000},
-            "body": {"engine": "pixal3d", "pick": "body-1", "triangles": 20000}},
+  "model": {"head": {"engine": "hunyuan-2mv", "pick": "head-2", "triangles": 12000},
+            "body": {"engine": "hunyuan-2mv", "pick": "body-1", "triangles": 20000}},
   "split": {"groups": {"hair": [...], "skirt": [...]}, "moving": ["skirt", "hair_back"]},
   "assembly": {"height": 1.55, "head": {"scale": 1.0, "offset": [0, 0, 0]}},
   "rig": {"donor": "assets/AvatarSample_E.vrm", "joints": {...}},
@@ -157,7 +158,7 @@ whether the route works at all here.
 | | Question | Done when |
 |---|---|---|
 | S1 views | Can FLUX.2 klein edit (or Qwen edit) make 4 consistent views of a head and a T-posed body from one design picture? | 8 views a human would accept, under 10 tries each. |
-| S2 3D | Hunyuan (front) vs Pixal3D (front + back) on that head and body: is the back usable, are hair locks and skirt separate shells? | One head and one body we'd keep. Needs Xcode for Pixal3D. |
+| S2 3D | Hunyuan3D-2mv (4 views) vs Hunyuan3D-MLX (front) on that head and body: are the sides and back right, are hair locks and skirt separate shells? | One head and one body we'd keep. |
 | S3 split | Does projecting per-view labels give clean hair / face / skirt groups? | Groups match the pictures from 4 sides. |
 | S4 paint | Does projecting the views' pixels beat the engine's own paint? | Side-by-side renders. |
 | S5 rig | Fit AvatarSample E's body to the generated T-pose and transfer weights: do shoulders, elbows and knees bend cleanly? | Bend renders with no tearing. |
@@ -165,7 +166,7 @@ whether the route works at all here.
 
 ## Risks
 - **View consistency** with a 4B model may be the weak link; Qwen edit or bring-your-own pictures are the fallbacks.
-- **Fused geometry:** single-image engines fuse hair to the back and skirts to legs. Front + back (Pixal3D) helps; if
+- **Fused geometry:** single-image engines fuse hair to the back and skirts to legs. Multiview input helps; if
   not, generate the moving parts as separate rigid or spring parts (lochara's part route).
 - **Texture budget:** 4K per group doesn't fit a web budget (BentoSite allows 1.5 MB in total); paint at 4K, ship at
   1K.

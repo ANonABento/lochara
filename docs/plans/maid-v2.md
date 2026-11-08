@@ -48,7 +48,7 @@ What I need, in any form:
 Head + hair and the T-posed body in 4 views, plus 3 balance views. Kevin reviews them.
 
 ### 3. 3D (spike S2)
-Head and body candidates. Pixal3D (front + back) is the target engine; install Xcode first. Kevin picks.
+Head and body candidates from the 4 views with Hunyuan3D-2mv (no Xcode). Kevin picks.
 
 ### 4. Cut and split (S3)
 Hair from head; body cut at the joints into rigid shells; dress, apron and skirt kept as the skinned group.
@@ -72,7 +72,7 @@ Skirt and hair springs (S6), a VRM export for other apps, more expressions.
 | | Needs | Rough effort |
 |---|---|---|
 | Design | Kevin | open |
-| Xcode install, Pixal3D setup | Kevin (App Store), then ~9 GB | an hour, mostly downloading |
+| Hunyuan3D-2mv setup | a download (size and licence stated first) | an hour |
 | S1 views | design | a session |
 | S2 3D | views, Pixal3D | a session (≈20 min per model) |
 | S3–S5 | candidates | a session each |
