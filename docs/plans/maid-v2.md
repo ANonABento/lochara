@@ -74,7 +74,7 @@ Skirt and hair springs (S6), a VRM export for other apps, more expressions.
 | Design | Kevin | open |
 | Hunyuan3D-2mv setup | a download (size and licence stated first) | an hour |
 | S1 views | design | a session |
-| S2 3D | views, Pixal3D | a session (≈20 min per model) |
+| S2 3D | views, Hunyuan3D-2mv | a session (≈20 min per model) |
 | S3–S5 | candidates | a session each |
 | S6 rig, prologue check | the above | a session |
 
