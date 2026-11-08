@@ -1,173 +1,175 @@
-# Plan: generated characters (the Charakuru route, locally)
+# Plan: characters from your own design (anime avatars)
 
-Today lochara restyles a body that is already rigged (VRoid) and adds rigid parts. This plan adds the other route:
-**a character made from your own design**, where the head, hair, body and outfit are generated as 3D models and then
-rigged. It follows the shape of [Charakuru](https://github.com/nanocle/Charakuru)'s workflow (see
-`docs/research.md`), with every cloud step replaced by something that runs on the machine.
+Today lochara restyles a body that is already rigged (VRoid) and adds rigid parts. This plan adds the route for
+**a character made from your own design**: an anime-style avatar (toon-shaded, like VTuber and VRChat models) whose
+hair, outfit and accessories are generated from your pictures, on a template body and face that bring a clean rig and
+expressions. It follows the shape of [Charakuru](https://github.com/nanocle/Charakuru)'s workflow (see
+`docs/research.md`) with every cloud step replaced by something that runs on the machine. Where the result goes (web,
+VTubing, VRChat) and what each needs is in [targets.md](targets.md).
 
 Ideas only: Charakuru's licence doesn't allow redistributing its code, skills or bundled body, so nothing of it is
-copied here. Its donor body is replaced by a CC0 one (below).
+copied here.
+
+## What changes for anime
+- **Don't generate the face.** Anime faces are nearly flat: the eyes, brows and mouth live in the texture and move
+  by shape keys. Generated faces come out lumpy and have no shape keys. So the face and head come from a template
+  (a VRoid face, which already has blink, emotions and mouth shapes) and are **painted from your design**.
+- **Do generate what makes the design yours:** hair, outfit, accessories, robot parts. Those are shapes, and shapes
+  are what 3D generation is good at.
+- **The body bends with real weights:** skin comes from the template; generated clothing gets the template's weights.
+- **Flat colour, no painted light.** The toon shader adds the shading (and outlines), so pictures and textures are
+  flat cel colour with clean lines. Light painted into a texture reads as dirt.
+- **Anime image models.** General models drift on anime faces; anime models and LoRAs hold them.
 
 ## The route at a glance
 
 ```
-design ──► views ──► 3D candidates ──► split ──► paint ──► assemble ──► rig ──► springs, face ──► export
-(you)      8 + 3      head, body ×4    parts     4K from   proportions   donor     VRM spring       GLB / VRM
-           pictures   (you pick)       by label  pictures  (you adjust)  weights   bones, blink
-   ▲          ▲            ▲              ▲                    ▲            ▲           ▲
-   checkpoint  checkpoint   checkpoint    checkpoint if joined  checkpoint   checkpoint   checkpoint (motion)
+design ─► character ─► views ─► 3D ─────► split ─► paint ─► fit ──────► rig ───► face, springs ─► export
+(you)     LoRA         8 + 3    hair,      locks,   from     to the      donor    expressions,     per target:
+          (optional)   pictures outfit,    skirt,   your     template    weights  spring bones     GLB, VRM,
+                                parts      shells   pictures body, face                            Unity FBX
+   ▲                    ▲        ▲                   ▲        ▲                    ▲
+   checkpoint           checkpoint (pick)            checkpoint                    checkpoint (motion)
 ```
 
-Every arrow is one `lochara` command that writes into the character folder and stops for review. Everything
-generated is kept beside the prompt and seed that made it.
+Every arrow is one `lochara` command that writes into the character folder and stops for review. Everything generated
+is kept beside the prompt, seed and model that made it.
 
 ## Stage by stage
 
 ### 1. Design (human)
-One full-body picture of the character is the authority for its design: face, hair (full length), outfit, colours,
-asymmetry. It can be your own drawing (any fidelity: a clean sketch with colour notes works), a commission, or a
-concept you pick and edit with `lochara concept`. A written brief (`design.md`) adds what the picture can't show: the
-back, materials, which parts glow, which parts move.
+One full-body picture is the authority for the design: face, hair (full length), outfit, colours, asymmetry. Your own
+drawing (a clean sketch with colour notes is enough), a commission, or concepts iterated with `lochara concept`.
+`design.md` adds what the picture can't show: the back, materials, what glows, what moves.
 
-### 2. Views
-**Charakuru:** an image model paints the head with all its hair, and the clothed body in a T-pose, each from front,
-left, right and back (8 pictures), then three full-body balance views (front, own right side, back).
+### 2. Character LoRA (optional, recommended)
+Once the design is approved, train a small LoRA of this one character on the design picture plus the best approved
+views (`mflux-train`, installed, runs locally). Every later picture (views, expressions, texture fixes) then keeps the
+same face and outfit. Spike S7.
 
-**lochara:** `lochara views <char>` draws the same 8 + 3 with a local editing model given the design picture as a
-reference, one part and one view per run, front first; the other views also get the approved front.
+### 3. Views
+**Charakuru:** an image model paints the head with all its hair, and the clothed body in a T-pose, front, left,
+right and back (8 pictures), then three full-body balance views.
 
-| Model | Run with | Notes |
+**lochara:** `lochara views <char>`, the same 8 + 3, one part and one view per run, front first; the other views
+also get the approved front.
+
+| Job | Model | Runs with |
 |---|---|---|
-| FLUX.2 klein 4B / 9B, edit mode | `mflux-generate-flux2-edit` (installed) | Fast (seconds). Multi-reference. Consistency across views is the open question (spike S1). |
-| Qwen-Image-Edit 2511 | `mflux-generate-qwen-edit` | Slower, larger; AssetFurnace already uses Qwen edit for back views and documents what works. |
-| Bring your own | any tool | Drop PNGs into `views/`. A cloud model or your own hand is fine; lochara only checks the files. |
+| Views from the design | **Qwen-Image-Edit 2511** + a turnaround LoRA (Civitai "Character Turnaround Sheet", for 2509/2511) | `mflux-generate-qwen-edit` (installed; the weights are a download) |
+| Concepts, anime finish | **Illustrious XL 2.0** (SDXL anime) + style LoRAs | ComfyUI |
+| Quick drafts | FLUX.2 klein (installed) | mflux |
+| Bring your own | any tool, or your own hand | drop PNGs into `views/` |
 
-The rules that make the pictures usable for 3D (our own wording of what Charakuru enforces):
+The picture rules (our wording of what Charakuru enforces, plus the anime ones):
 - **Split:** `head` = face, ears, all hair to the longest tips, head accessories; no neck. `body` = neck down,
-  outfit, hands, legs, shoes; no head, no hair (fill in what the hair hid).
-- **Pose:** head upright, eyes level, neutral face, mouth closed. Body in a true T-pose (arms horizontal, elbows and
-  wrists straight), feet about hip-width apart with a visible gap between the shoes.
-- **Sides are the character's own:** in `left` the character's left side is visible and its nose points screen
-  left; in `right`, screen right. Never mirror one side to make the other: asymmetric details must be on the right
-  side.
-- **Same canvas:** square, transparent, same scale and baseline for all four views of a part.
-- **Finish:** paint everything (hair, skin, cloth, metal) to finished-illustration quality; generated textures are
-  never better than these pictures.
+  outfit, hands, legs, shoes; no head, no hair.
+- **Pose:** head upright, eyes level, neutral face, mouth closed. Body in a true T-pose, feet hip-width apart with a
+  gap between the shoes.
+- **Sides are the character's own** (in `left` the nose points screen left). Never mirror one side to make the other.
+- **Same canvas:** square, transparent, same scale and baseline across a part's four views.
+- **Flat cel colour, clean lines, no lighting or cast shadows** (the shader does that).
 - **Two tries:** if a fix doesn't improve after two edits, stop and say what's still wrong.
 
-*Checkpoint:* review all 11; redo single views.
+*Checkpoint:* review all 11.
 
-### 3. 3D candidates
-**Charakuru:** Tripo multiview, four candidates per part, ~25k quads.
+### 4. 3D: hair, outfit, accessories
+`lochara model <char> hair|outfit|<part>` makes several candidates from the views, each Finished to a triangle
+budget and previewed from four sides.
 
-**lochara:** `lochara model <char> head|body` sends the views to AssetFurnace and makes several candidates (seeds or
-engines), each Finished to a triangle budget and previewed from four sides.
-
-| Engine | Input | Status here |
+| Engine | Input | Notes |
 |---|---|---|
-| **Hunyuan3D-2mv** | front, left, back, right | The closest local match to Tripo's multiview, which Charakuru uses. Shape only: the texture comes from our own pictures (step 5) anyway. PyTorch on the Mac GPU (MPS) or ComfyUI; no Xcode. Tencent licence. **First choice** (spike S2). |
-| Hunyuan3D-MLX | front | Works today. Single view, so the sides and back are invented. |
-| Pixal3D | front + back | AssetFurnace's best single-character route, but its Metal kernels need full Xcode (free from developer.apple.com as a .xip; no App Store needed). Only if 2mv disappoints. |
-| TRELLIS.2 | front | Also needs Xcode on a Mac, and Meta's DINOv3 approval. |
+| **Hunyuan3D-2mv** | front, left, back, right | The local match for Tripo's multiview (what Charakuru uses). Shape only, which is all we need. Runs in ComfyUI on the Mac GPU. **First choice** (spike S2). |
+| Hunyuan3D-MLX (AssetFurnace) | front | Works today (the ear). For small rigid parts. |
 
-*Checkpoint:* pick one head and one body (turntable and wireframe in the contact sheet).
+Pixal3D and TRELLIS.2 are out: on a Mac both need Xcode, which needs an Apple ID.
 
-### 4. Split
-**Charakuru:** Tripo's segmentation, then the agent labels the pieces by eye: hair, head, upper body, lower body,
-accessories for textures, and separately the things that swing (skirt, ribbons, hair locks).
+For the hair and outfit, the views are masked to just that piece (the head views without the face for hair; the body
+views as they are for the outfit), so the engine builds only what will be used.
 
-**lochara:** `lochara split <char>`:
-1. Connected pieces first (generated meshes are often several shells).
-2. Labels from the pictures: each of the 4 views is a known orthographic camera, so a 2D label map per view (by
-   colour region, or SAM 2 clicks) is projected onto the mesh and each face takes the majority vote.
-3. Seams follow face boundaries; nothing is welded or deleted.
+*Checkpoint:* pick one candidate of each.
 
-Labels go in `character.json` (`split.groups`); the result is a labelled preview. When a piece that should move
-(a skirt) is fused to something that shouldn't (the legs), stop and show it (spike S3).
+### 5. Split
+`lochara split <char>`:
+1. Connected pieces first.
+2. Labels from the pictures: each view is a known orthographic camera, so a 2D label map per view (colour regions or
+   SAM 2 clicks) is projected onto the mesh, and each face takes the majority vote.
+3. Groups: hair locks (each a spring chain later), skirt, apron, ribbons, rigid shells (robot plates).
 
-### 5. Paint
-**Charakuru:** Tripo Smart UV and 4K retexture per texture group, guided by new front/back pictures of each group.
+When something that should move is fused to something that shouldn't, stop and show it (spike S3).
 
-**lochara:** `lochara paint <char>`: UV unwrap per group in Blender, then project the approved views' real pixels
-onto the surface (AssetFurnace's `photo_paint`, Apache-2.0: blends views by how squarely each sees the surface, keeps
-the generated paint only where no picture looks). Our pictures are the design, so copying their pixels beats
-re-painting. Bake to one texture per group at the output size.
+### 6. Paint
+`lochara paint <char>`: UV unwrap per group in Blender, then project the approved views' real pixels onto the surface
+(AssetFurnace's `photo_paint`, Apache-2.0). The template face gets your design's eyes, brows and mouth painted into its
+texture, on the face's existing UV layout, so its expressions keep working. Bake at 2K–4K, ship at the target's size.
 
-### 6. Assemble and proportions
-**Charakuru:** the user scales and moves the head, hair and body against the translucent balance views.
+### 7. Fit to the template
+The template is a VRoid body and face: a CC0 sample (AvatarSample E, already used) or your own VRoid Studio export.
+`lochara fit <char>`:
+- Body proportions from the balance views (height, head size, limb lengths) applied to the template by bone scale.
+- Hair placed on the head, outfit on the body, checked against the balance views (`lochara render --compare`).
+- The template's own hair and clothes removed.
 
-**lochara:** `assembly` in `character.json` (head scale and offset, height in metres). `lochara render --compare`
-overlays the model on the three balance views. Later, a small local viewer with sliders that writes the numbers back
-(three.js; optional).
+*Checkpoint:* proportions and fit.
 
-*Checkpoint:* proportions.
-
-### 7. Rig
-**Charakuru:** Tripo rigs the head and body with VRM bones; only the bone **positions** are kept. A bundled,
-hand-weighted body is fitted to those positions and its weights are copied onto the outfit (nearest triangle,
-top 4 influences); hands get Blender's automatic weights; the arms are levelled and the rest pose is baked.
-
-**lochara:** the same idea, locally:
-1. **Joint positions:** found from the T-pose mesh (cross-sections give shoulders, elbows, wrists, hips, knees,
-   ankles; the split gives the neck), or from SkinTokens (AssetFurnace, MIT, 1.5 GB). Shown as markers on renders,
-   stored in `rig.joints`, editable as numbers.
-2. **Donor:** a CC0 VRoid sample body (we already use AvatarSample E), or any rigged body you own (a VRoid Studio
-   export). Its skeleton is fitted joint by joint; bone names stay the donor's (then the bone preset applies).
-3. **Weights:** Blender Data Transfer from the fitted donor (nearest face, interpolated), top 4, normalised; head and
-   hair fixed to `Head`; rigid parts parented as today.
-4. **Report:** vertices more than 5 cm from the donor (loose cloth), fingers without weights; renders of bent
-   elbows, knees and shoulders.
+### 8. Rig
+Weights for generated clothing are copied from the fitted template body (Blender Data Transfer, nearest face,
+interpolated, top 4, normalised). Rigid pieces are parented to one bone, as parts are today. Report: vertices far from
+the body (loose cloth), plus renders of bent elbows, knees and shoulders.
 
 *Checkpoint:* the bend renders.
 
-### 8. Springs and face
-- **Springs:** chains for hair locks, skirt, ribbons, from the split's moving groups (root fixed, weights fading to the
-  tip), with colliders for the head, chest, hips and legs. Written as VRM 1.0 spring bones with the VRM Add-on for
-  Blender (MIT). GLB has no spring bones, so for a web app they are either run by three-vrm (export VRM) or left to
-  the app.
-- **Face:** the standard route keeps a neutral face. `blink` (what most apps need first): either a morph authored on
-  the eyelids, or, for stylised faces, eyes as separate decal meshes squashed by a morph. Other expressions are later.
+### 9. Face and springs
+- **Expressions:** the template's shape keys, renamed per target: VRM presets (blink, emotions, aa/ih/ou/ee/oh,
+  look), VRChat visemes, and optionally the 52 ARKit shapes for iPhone face tracking (see `targets.md`).
+- **Springs:** chains for hair locks, skirt, ribbons (root fixed, weights fading to the tip) with colliders on the
+  head, chest, hips and legs. VRM spring bones via the VRM Add-on for Blender; for VRChat, PhysBones are added in Unity
+  (the export carries a list of the chains).
 
-*Checkpoint:* a walk and a drag test in a local viewer (three-vrm), like Charakuru's motion check.
+*Checkpoint:* a walk and a drag test in a local three-vrm viewer, like Charakuru's motion check.
 
-### 9. Export
-GLB (as today, with the contract check and the size budget), plus VRM 1.0 with name, author and licence from
-`character.json` (never guessed).
+### 10. Export
+Per target in `targets.md`: GLB (web), VRM 0.x and 1.0 (VTubing), FBX plus a setup note (VRChat), each with its
+contract and budget checked. Name, author and licence come from `character.json`, never guessed.
 
 ## Format sketch
 ```jsonc
 {
-  "route": "generated",                         // "restyle" is today's route
-  "design": {"picture": "design/front.png", "brief": "design/design.md"},
-  "views": {"engine": "flux2-klein-edit", "seed": 3},
-  "model": {"head": {"engine": "hunyuan-2mv", "pick": "head-2", "triangles": 12000},
-            "body": {"engine": "hunyuan-2mv", "pick": "body-1", "triangles": 20000}},
-  "split": {"groups": {"hair": [...], "skirt": [...]}, "moving": ["skirt", "hair_back"]},
-  "assembly": {"height": 1.55, "head": {"scale": 1.0, "offset": [0, 0, 0]}},
-  "rig": {"donor": "assets/AvatarSample_E.vrm", "joints": {...}},
+  "route": "generated",
+  "profile": "anime-avatar",
+  "design": {"picture": "design/front.png", "brief": "design/design.md", "lora": "design/lora.safetensors"},
+  "template": {"file": "assets/AvatarSample_E.vrm", "keep": ["body", "face"]},
+  "views": {"engine": "qwen-edit-2511", "loras": ["turnaround"], "seed": 3},
+  "model": {"hair": {"engine": "hunyuan-2mv", "pick": "hair-2", "triangles": 8000},
+            "outfit": {"engine": "hunyuan-2mv", "pick": "outfit-1", "triangles": 15000}},
+  "split": {"groups": {"hair_back": [...], "skirt": [...]}, "moving": ["hair_back", "skirt"]},
+  "fit": {"height": 1.55, "head": 1.0, "arms": 1.0, "legs": 1.0},
   "springs": [{"group": "skirt", "stiffness": 1.0, "gravity": 0.15, "drag": 0.4}],
-  "face": {"blink": "decal"},
+  "targets": ["web", "vtuber"],
+  "meta": {"name": "...", "author": "...", "licence": "..."}
   // parts, style (materials), output, contract and export work as they do now
 }
 ```
 
 ## Spikes first
-Each answers one question on a real character before the command is written. Order matters: S1 and S2 decide
-whether the route works at all here.
+Each answers one question on a real character before its command is written. S1 and S2 decide whether the route
+works here.
 
 | | Question | Done when |
 |---|---|---|
-| S1 views | Can FLUX.2 klein edit (or Qwen edit) make 4 consistent views of a head and a T-posed body from one design picture? | 8 views a human would accept, under 10 tries each. |
-| S2 3D | Hunyuan3D-2mv (4 views) vs Hunyuan3D-MLX (front) on that head and body: are the sides and back right, are hair locks and skirt separate shells? | One head and one body we'd keep. |
-| S3 split | Does projecting per-view labels give clean hair / face / skirt groups? | Groups match the pictures from 4 sides. |
-| S4 paint | Does projecting the views' pixels beat the engine's own paint? | Side-by-side renders. |
-| S5 rig | Fit AvatarSample E's body to the generated T-pose and transfer weights: do shoulders, elbows and knees bend cleanly? | Bend renders with no tearing. |
-| S6 springs | Blender VRM Add-on: spring chains on the skirt, exported, checked in three-vrm. | A drag test that swings. |
+| S1 views | Can Qwen-Image-Edit 2511 (+ turnaround LoRA) make 4 consistent views of the head and the T-posed body from one design picture? | 8 views a human would accept, under 10 tries each. |
+| S2 3D | Hunyuan3D-2mv on the hair and the outfit: are the sides and back right, are locks and skirt separate? | One hair and one outfit we'd keep. |
+| S3 split | Does projecting per-view labels give clean groups? | Groups match the pictures from 4 sides. |
+| S4 paint | Projected pixels on the hair, outfit and the template face. | Renders that read as the design. |
+| S5 fit + rig | Template fitted, clothing weighted: clean bends? | Bend renders with no tearing. |
+| S6 springs | VRM Add-on spring chains on the skirt and hair, checked in three-vrm. | A drag test that swings. |
+| S7 LoRA | Does a character LoRA trained locally make views and expressions more consistent? | Same face across 10 pictures. |
 
 ## Risks
-- **View consistency** with a 4B model may be the weak link; Qwen edit or bring-your-own pictures are the fallbacks.
-- **Fused geometry:** single-image engines fuse hair to the back and skirts to legs. Multiview input helps; if
-  not, generate the moving parts as separate rigid or spring parts (lochara's part route).
-- **Texture budget:** 4K per group doesn't fit a web budget (BentoSite allows 1.5 MB in total); paint at 4K, ship at
-  1K.
-- **Memory:** 25.8 GB; one big model at a time, as now.
+- **Anime faces from generated views** may still drift; the LoRA (S7) and painting the face on the template are the
+  mitigations.
+- **Fused geometry:** hair fused to the back, skirts to legs. Multiview input helps; else generate the piece on its
+  own (the part route).
+- **Every avatar looking like VRoid:** the template's face shape stays. Mitigation: a face shape set by sliders
+  (VRoid Studio itself) or a sculpted template later.
+- **Memory:** 25.8 GB; Qwen-Image-Edit runs quantised (4- or 8-bit), one big model at a time.

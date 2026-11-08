@@ -1,8 +1,10 @@
 # lochara
 
-**Local character creation.** Make a rigged 3D character for the web on your own computer: a rigged base body,
-rigid parts generated from a text prompt, each attached to a bone, built into one GLB you can drop into three.js,
-Godot, Unity or Blender. No cloud services or credits, and no uploading your art anywhere.
+**Local character creation.** Make anime-style 3D avatars (toon-shaded, VTuber and VRChat style) on your own
+computer, for the web, VTubing and games. Today: a rigged base body restyled by a recipe, with rigid parts generated
+from a prompt and attached to bones, built into one GLB you can drop into three.js, Godot, Unity or Blender. Next:
+characters from your own design, with hair, outfit and accessories generated from your pictures, exported as GLB,
+VRM and VRChat-ready FBX ([roadmap](docs/plans/)). No cloud services or credits, and no uploading your art anywhere.
 
 lochara is a CLI plus agent skills. The agent (Claude Code, Codex, ...) does the work and stops at each checkpoint
 for you to look and choose. Its method comes from [Charakuru](https://github.com/nanocle/Charakuru): build the
@@ -25,9 +27,8 @@ does this with a cloud service (Tripo); lochara uses only local tools.
 Early (0.1). Works on an Apple Silicon Mac; the picture and 3D steps depend on Apple-Silicon or NVIDIA builds of the
 models. Tested end to end with the example character, the robot maid in `examples/robot-maid`.
 
-Next: a second route for characters made from your own design, where the head, hair, body and outfit are generated
-from your pictures and rigged with a donor body's weights (Charakuru's approach, all local). See
-[docs/plans/](docs/plans/).
+Next: the design route (hair, outfit and accessories generated from your pictures, on a template body and face that
+bring the rig and expressions) and export targets for web, VTubing (VRM) and VRChat. See [docs/plans/](docs/plans/).
 
 ## Quick start
 ```sh
@@ -80,7 +81,7 @@ See [docs/character-format.md](docs/character-format.md).
 ## Docs
 - [docs/workflow.md](docs/workflow.md): the end-to-end workflow, with each checkpoint.
 - [docs/character-format.md](docs/character-format.md): `character.json` reference.
-- [docs/plans/](docs/plans/): the roadmap, the generated-character route and the robot maid v2.
+- [docs/plans/](docs/plans/): the roadmap and setup list, the design route, export targets (web, VTuber, VRChat), the robot maid v2.
 - [docs/research.md](docs/research.md): the tools we evaluated (Charakuru, Tripo, TRELLIS.2, Hunyuan3D, Pixal3D,
   StdGEN, UniRig ...) and why lochara is built this way.
 - [AGENTS.md](AGENTS.md): instructions for coding agents; the Claude Code skills are in `.claude/skills/`.

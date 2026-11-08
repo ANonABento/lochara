@@ -1,7 +1,8 @@
 # Plan: robot maid v2 (BentoSite)
 
-v1 (`examples/robot-maid`) is a restyled stock body. v2 is **Kevin's own design**, built with the generated route
-(`generated-character.md`), and replaces v1 in BentoSite's prologue. It is also lochara's first real test of that
+v1 (`examples/robot-maid`) is a restyled stock body. v2 is **Kevin's own design**, built with the design route
+(`generated-character.md`, profile `anime-avatar`, targets `web` and `vtuber`), and replaces v1 in BentoSite's
+prologue; the same character also exports as a VRM for VTubing. It is also lochara's first real test of that
 route, so it is built in the open as `examples/robot-maid-v2`.
 
 ## What the site needs (fixed)
@@ -20,16 +21,17 @@ Most of a robot is rigid: plates and shells that each follow one bone. Only clot
 
 | Piece | How it's made | Moves by |
 |---|---|---|
-| Head shell, face plate, headdress, ear units | generated parts (today's part route), one per bone | rigid, `Head` |
-| Hair | generated with the head (head + hair views) | `Head`, springs later |
+| Face | the template's (VRoid) face, painted from the design: porcelain, mouthless or not, glowing irises | template shape keys (blink, emotions) |
+| Face plate, headdress, ear units | generated parts (today's part route), one per bone | rigid, `Head` |
+| Hair | generated from the head views | `Head`, then spring chains |
 | Torso, upper arms, forearms, thighs, shins | generated body, then split at the joints | rigid per bone (no weights) |
 | Joints (shoulder, elbow, wrist, knee) | generated or scripted rings | rigid |
 | Dress, apron, skirt | generated with the body | donor weights (+ springs later) |
 | Hands | scripted mechanical hands (v1's sculpted hands, restyled to the design) | finger bones |
-| Eyes | emissive decal meshes; `blink` squashes them | morph |
+| Eyes | the template's eyes, with emissive irises (as v1) | `blink` shape key |
 
-So the hard step of the generated route (weights that bend skin cleanly) is only needed for the cloth, and the robot
-body can be cut at the joints into rigid pieces. The skeleton still comes from the donor (AvatarSample E), fitted
+So the hard step (weights that bend cleanly) is only needed for the cloth, the face comes with its expressions, and
+the robot body can be cut at the joints into rigid pieces. The skeleton still comes from the donor (AvatarSample E), fitted
 to the design's joints, so the contract keeps passing.
 
 ## Steps
@@ -48,14 +50,14 @@ What I need, in any form:
 Head + hair and the T-posed body in 4 views, plus 3 balance views. Kevin reviews them.
 
 ### 3. 3D (spike S2)
-Head and body candidates from the 4 views with Hunyuan3D-2mv (no Xcode). Kevin picks.
+Hair, outfit and robot shells from the 4 views with Hunyuan3D-2mv. Kevin picks.
 
 ### 4. Cut and split (S3)
 Hair from head; body cut at the joints into rigid shells; dress, apron and skirt kept as the skinned group.
 
 ### 5. Paint (S4), hands, eyes
-Project the views onto the pieces. Restyle the scripted hands to the design's colours and plating. Eye decals with a
-`blink` morph and emissive irises.
+Project the views onto the pieces and paint the template face. Restyle the scripted hands to the design's colours
+and plating.
 
 ### 6. Rig (S5)
 Fit AvatarSample E's skeleton to the design; parent the rigid shells to their bones; transfer the donor's weights to
@@ -66,7 +68,7 @@ Export to a branch of BentoSite, check every shot on the tuning page (`prototype
 `ROBOT_HOME` only if needed, re-record the phone video. Kevin signs off; then it replaces `robot-maid.glb`.
 
 ### Later
-Skirt and hair springs (S6), a VRM export for other apps, more expressions.
+Skirt and hair springs (S6), the VTuber VRM (`targets.md`), more expressions.
 
 ## Order and effort
 | | Needs | Rough effort |

@@ -95,6 +95,21 @@ the default 20k triangles it was 870 KB after compression (texture seams block s
 171 KB and still clean at prologue scale. The orange ring is painted, not glowing, and came out a little burnt, so
 glow is a material we add when fitting. Renders: `examples/robot-maid/renders/parts-p1-ear-hy*.png`; on the maid, `examples/robot-maid/renders/lochara-generated-ears.png`.
 
+## Anime-style avatars (2026-11-08)
+The target style is anime avatars: toon-shaded (MToon for VRM; lilToon or Poiyomi in VRChat), with expressions by
+shape keys and hair and skirts on spring bones.
+- **Image models:** the community favours anime-trained models over general ones: Illustrious XL and NoobAI-XL
+  (SDXL family) for concepts, Qwen-Image-Edit 2511/2509 with turnaround LoRAs for views of one character (one known
+  flaw: the Civitai turnaround LoRA draws characters a little narrow). An experimental anime-consistency adapter exists
+  for Qwen-Image 2.1. A LoRA of the character itself is the usual way to keep one face across many pictures.
+- **3D:** generated anime faces are lumpy and have no shape keys, so the face comes from a template (VRoid) and only
+  hair, outfit and accessories are generated. Hunyuan3D-2mv takes 4 views (ComfyUI supports it natively; shape only).
+- **Commercial tools** (Neural4D AnimeArt, img2avatar, Meshy, Tripo) do image → rigged avatar in the cloud; most
+  export FBX or GLB, a few VRM.
+- **VRChat:** performance ranks cap Quest avatars at 7.5k triangles for Excellent, 10k Good, 15k Medium; PhysBones
+  and colliders are limited on mobile. Uploads go through Unity and VRChat's SDK.
+- **VTubing apps** read VRM; some (VSeeFace) only VRM 0.x. iPhone "perfect sync" tracking needs the 52 ARKit shapes.
+
 ## Sources
 - https://github.com/nanocle/Charakuru (README, docs/tutorial.md, docs/license.md)
 - https://github.com/Bingeljell/image-to-3dlab
@@ -104,3 +119,8 @@ glow is a material we add when fitting. Renders: `examples/robot-maid/renders/pa
 - https://arxiv.org/html/2411.05738v1 (StdGEN)
 - https://github.com/Tencent-Hunyuan/Hunyuan3D-Part
 - https://github.com/VAST-AI-Research/UniRig
+- https://civitai.com/models/2149265/character-turnaround-sheet-qwen-image-edit-25112509
+- https://comfyui-wiki.com/en/news/2026-09-27-qwen-image-2-1-loras
+- https://docs.comfy.org/tutorials/3d/hunyuan3d-2
+- https://wiki.vrchat.com/wiki/Avatar_Performance_Ranking
+- https://www.3daistudio.com/blog/best-ai-tools-for-vrchat-vtuber-avatars-2026
