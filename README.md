@@ -49,6 +49,9 @@ git clone https://github.com/ANonABento/lochara && cd lochara
 ./lochara export mychar --to ~/my-game/assets/mychar.glb
 ```
 
+Pictures from another tool (a hosted image model, an agent, your own art app): add `--via handoff` to `concept` or
+`part draw`, then `./lochara requests` and `./lochara deliver mychar <request-id> <files>` ([docs/agents.md](docs/agents.md)).
+
 ## What you need
 | Tool | Used for | |
 |---|---|---|
@@ -81,6 +84,7 @@ See [docs/character-format.md](docs/character-format.md).
 ## Docs
 - [docs/workflow.md](docs/workflow.md): the end-to-end workflow, with each checkpoint.
 - [docs/character-format.md](docs/character-format.md): `character.json` reference.
+- [docs/agents.md](docs/agents.md): driving lochara from an agent or a chat app, and pictures from other tools (handoff).
 - [docs/plans/](docs/plans/): the roadmap and setup list, the design route, export targets (web, VTuber, VRChat), the robot maid v2.
 - [docs/research.md](docs/research.md): the tools we evaluated (Charakuru, Tripo, TRELLIS.2, Hunyuan3D, Pixal3D,
   StdGEN, UniRig ...) and why lochara is built this way.

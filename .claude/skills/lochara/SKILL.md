@@ -9,8 +9,9 @@ description: Make or change a rigged 3D character with lochara (local character 
    `character.json` and look at what exists: `concepts/`, `parts/*/`, `build/`, `renders/`. Tell the user which
    stage it's at.
 2. **Missing tools:** `./lochara setup assetfurnace` installs code only. Engine weights: show `./lochara engines`,
-   say the size and licence, and wait for a yes before `./lochara setup engine <id> --yes`. Pixal3D needs full
-   Xcode; TRELLIS.2 needs approved DINOv3 access on Hugging Face; Hunyuan3D-MLX (`hunyuan_xiong`) needs neither.
+   say the size and licence, and wait for a yes before `./lochara setup engine <id> --yes`. AssetFurnace's Pixal3D and
+   TRELLIS.2 need full Xcode; Hunyuan3D-MLX (`hunyuan_xiong`) doesn't. Multiview Pixal3D and Hunyuan3D-2mv run in
+   ComfyUI (`vendor/comfyui`, docs/plans/README.md).
 3. **Run the stage the user wants**, following docs/workflow.md. Parts: the `lochara-part` skill. Building, placing,
    styling, rendering, exporting: the `lochara-build` skill.
 
@@ -24,7 +25,14 @@ description: Make or change a rigged 3D character with lochara (local character 
 | `lochara build` | `lochara render <c>` (and `--focus <bone>` for the parts) plus the check line |
 | `lochara export` | where it went |
 
-Open images for the user with `open <png>` on macOS when they ask to see them; read them yourself first.
+Open images for the user with `open <png>` on macOS when they ask to see them; read them yourself first. In a chat
+app, attach them to your reply instead.
+
+## Pictures made elsewhere (handoff)
+`--via handoff` on `concept` and `part draw` writes a request instead of drawing (add `--ref design.png`).
+`lochara requests` shows it; make the pictures with whatever the user chose (Choomfie: `ask_brain` to Waymond with
+`save_to`), then `lochara deliver <c> <request-id> <files>`; pick by name (`h1`, `h2`, ...). Details:
+docs/agents.md.
 
 ## Starting a character
 `./lochara new <name> [--base <rigged.vrm|glb>]` makes `characters/<name>/`. No base yet: suggest VRoid Studio

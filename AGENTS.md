@@ -16,6 +16,10 @@ doctor` first).
   it: ComfyUI's workflow templates (they list their model files and URLs), pre-quantized models (`mflux-community`,
   `Comfy-Org` repackaged), popular LoRAs (Hugging Face sorted by downloads, Civitai), AssetFurnace's modules. Use
   them over new code, and say what you found.
+- **In a chat app** (Discord through Choomfie, ...), the user can't see your terminal: attach every checkpoint's image
+  (sheet, preview, render) to your reply, and keep the text short. See `docs/agents.md`.
+- **Pictures from elsewhere:** when the user wants a hosted image model, use `--via handoff` and fill the request
+  with `lochara deliver` (`docs/agents.md`). Say that the design is uploaded to that service.
 - **Fixes are numbers.** Placement, size, glow and style go in `character.json`. Change code only for things a
   recipe can't express, and then prefer a character's own `style.script` over changing lochara.
 - **Never commit** `vendor/`, `assets/`, `build/` or third-party models. Note the base model's licence in the recipe.

@@ -11,6 +11,7 @@ mychar/
   style/              optional: your own Blender style script
   build/              styled.glb, <id>.raw.glb, <id>.glb (the optimised result; gitignored)
   renders/            `lochara render` contact sheets
+  requests/<id>/      picture requests for other tools (`--via handoff`, docs/agents.md)
 ```
 
 `lochara new <name>` makes one in `characters/` (gitignored, so your characters stay yours). Commands take a
@@ -58,7 +59,7 @@ A list. Each part is a rigid mesh attached to one bone; it moves with that bone 
 | `rotation` | `[pitch, yaw, roll]` degrees about the character's right, up and forward. At `[0, 0, 0]` the part's front (the "Front" of its preview) faces the character's forward; yaw `-90` turns it to face the character's right. |
 | `mirror` | `true` adds a mirrored copy on the other side (on the mirrored bone: Left↔Right, `_L`↔`_R`, `.L`↔`.R`). |
 | `glow` | `{"hue": [lo, hi], "strength": 3}`: generated textures paint lights on; this makes the pixels in that hue range (degrees, saturated and bright) emissive. Orange is about `[10, 45]`, cyan `[170, 200]`. |
-| `seed`, `engine`, `triangles`, `notes` | Recorded by the CLI for reproducibility. |
+| `seed`, `picture`, `via`, `engine`, `triangles`, `notes` | Recorded by the CLI: the local seed or the delivered picture's name, `local` or `handoff`, the 3D engine. |
 
 The built GLB names each part's node `part_<id>` (and `part_<id>_mirror`), so your app can find it.
 

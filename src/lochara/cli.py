@@ -15,7 +15,9 @@ import sys
 from pathlib import Path
 
 from . import assetfurnace as af
-from . import glb, pictures
+from PIL import Image
+
+from . import glb, handoff, pictures
 from .character import Character, create, expand, find
 from .env import REPO, Problem, blender, mflux, npx, run_blender, vroid_studio
 
@@ -73,6 +75,10 @@ def cmd_new(a):
     print(f"made {c.root}\nnext: put a rigged base model in assets/ (or pass --base), then `lochara build {a.name}`")
 
 
+def all_characters() -> list[Path]:
+    return [f for folder in ("characters", "examples") for f in sorted((REPO / folder).glob("*/character.json"))]
+
+
 def cmd_list(a):
     for folder in ("characters", "examples"):
         for f in sorted((REPO / folder).glob("*/character.json")):
@@ -88,8 +94,14 @@ def cmd_concept(a):
     c = Character(find(a.character))
     prompt = f"{a.prompt}. {pictures.CONCEPT_STYLE}" if not a.raw else a.prompt
     out = c.root / "concepts"
-    made = pictures.draw(prompt, out, seeds_for(a), (768, 1344), prefix=f"{a.tag}-s")
+    out.mkdir(parents=True, exist_ok=True)
     (out / f"{a.tag}-prompt.txt").write_text(prompt + "\n")
+    if a.via == "handoff":
+        req = handoff.create(c, "concept", prompt, out, f"{a.tag}-h", a.n, [Path(r) for r in a.ref or []], (768, 1344),
+                             notes="full body, whole figure in frame, plain background")
+        print(handoff.describe(req))
+        return
+    made = pictures.draw(prompt, out, seeds_for(a), (768, 1344), prefix=f"{a.tag}-s")
     s = pictures.sheet(made, out / f"{a.tag}-sheet.png", tile=384)
     print(f"sheet: {s}")
 
@@ -105,20 +117,34 @@ def cmd_part(a):
         prompt = text if (a.raw or not a.prompt) else f"{text}. {pictures.PART_STYLE}"
         (d).mkdir(parents=True, exist_ok=True)
         (d / "prompt.txt").write_text(prompt + "\n")
-        made = pictures.draw(prompt, d / "candidates", seeds_for(a), (1024, 1024))
-        print(f"sheet: {pictures.sheet(sorted((d / 'candidates').glob('s*.png')), d / 'candidates' / 'sheet.png')}")
         if not part:
-            c.data.setdefault("parts", []).append({"id": a.id, "bone": "", "enabled": False})
-            c.save()
+            part = {"id": a.id, "bone": "", "enabled": False}
+            c.data.setdefault("parts", []).append(part)
+        part["via"] = a.via
+        c.save()
+        if a.via == "handoff":
+            req = handoff.create(c, f"part-{a.id}", prompt, d / "candidates", "h", a.n, [Path(r) for r in a.ref or []],
+                                 notes="one isolated object, whole object in frame, plain background")
+            print(handoff.describe(req))
+            print(f"after delivery: lochara part pick {c.id} {a.id} h<n>")
+            return
+        pictures.draw(prompt, d / "candidates", seeds_for(a), (1024, 1024))
+        print(f"sheet: {candidate_sheet(d)}")
         print(f"next: lochara part pick {c.id} {a.id} <seed>")
     elif a.action == "pick":
-        src = d / "candidates" / f"s{a.seed}.png"
-        if not src.exists():
-            raise Problem(f"no candidate {src}")
-        shutil.copy(src, d / "picture.png")
+        name = f"s{a.seed}" if str(a.seed).isdigit() else str(a.seed)
+        found = sorted((d / "candidates").glob(f"{name}.*"))
+        if not found:
+            raise Problem(f"no candidate {name} in {d / 'candidates'}")
+        Image.open(found[0]).convert("RGBA").save(d / "picture.png")
         if part is not None:
-            part["seed"] = int(a.seed)
+            if str(a.seed).isdigit():
+                part["seed"] = int(a.seed)
+            else:
+                part.pop("seed", None)
+                part["picture"] = name
             c.save()
+        src = found[0]
         print(f"picked {src.name}. next: lochara part model {c.id} {a.id}")
     elif a.action == "model":
         pic = d / "picture.png"
@@ -233,6 +259,39 @@ def cmd_export(a):
 
 
 # ------------------------------------------------------------------ parser
+def candidate_sheet(d: Path) -> Path:
+    files = sorted(p for p in (d / "candidates").iterdir() if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")
+                   and p.stem != "sheet")
+    return pictures.sheet(files, d / "candidates" / "sheet.png")
+
+
+def cmd_requests(a):
+    chars = [Character(find(a.character))] if a.character else [Character(f.parent) for f in all_characters()]
+    any_open = False
+    for c in chars:
+        for req in handoff.open_requests(c):
+            any_open = True
+            print(handoff.describe(req) + "\n")
+    if not any_open:
+        print("no open requests")
+
+
+def cmd_deliver(a):
+    c = Character(find(a.character))
+    placed = handoff.deliver(c, a.request, [Path(f) for f in a.files])
+    req = handoff.load(c, a.request)
+    for p in placed:
+        print(f"  {p}")
+    dest = Path(req["deliver_to"])
+    if req["kind"] == "concept":
+        tag = req["prefix"].rsplit("-", 1)[0]
+        files = sorted(p for p in dest.glob(f"{tag}-*") if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp"))
+        print(f"sheet: {pictures.sheet(files, dest / f'{tag}-sheet.png', tile=384)}")
+    else:
+        print(f"sheet: {candidate_sheet(dest.parent)}")
+        print(f"next: lochara part pick {c.id} {req['kind'].removeprefix('part-')} {placed[0].stem}")
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="lochara", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -255,17 +314,28 @@ def main(argv=None):
         s.add_argument("--seeds", type=int, nargs="+", help="exact seeds instead of random ones")
         s.add_argument("--raw", action="store_true", help="send the prompt as written (no style wording added)")
 
+    def via(s):
+        s.add_argument("--via", choices=["local", "handoff"], default="local",
+                       help="local: draw with FLUX here; handoff: write a request for another tool or agent to fill")
+        s.add_argument("--ref", nargs="+", help="reference pictures for a handoff (the design)")
+
     s = sub.add_parser("concept", help="draw full-body concepts")
     s.add_argument("character"); s.add_argument("prompt"); s.add_argument("--tag", default="c")
-    seeds(s); s.set_defaults(fn=cmd_concept)
+    seeds(s); via(s); s.set_defaults(fn=cmd_concept)
 
     s = sub.add_parser("part", help="draw / pick / model a part")
     s.add_argument("action", choices=["draw", "pick", "model"]); s.add_argument("character"); s.add_argument("id")
     s.add_argument("prompt", nargs="?", help="draw: what the part looks like")
     s.add_argument("seed", nargs="?", help="pick: the seed of the candidate")
     s.add_argument("--engine", default=DEFAULT_ENGINE); s.add_argument("--triangles", type=int, default=3000)
-    seeds(s)
+    seeds(s); via(s)
     s.set_defaults(fn=cmd_part)
+
+    s = sub.add_parser("requests", help="list open picture requests (handoffs)")
+    s.add_argument("character", nargs="?"); s.set_defaults(fn=cmd_requests)
+    s = sub.add_parser("deliver", help="fill a picture request with files made elsewhere")
+    s.add_argument("character"); s.add_argument("request"); s.add_argument("files", nargs="+")
+    s.set_defaults(fn=cmd_deliver)
 
     s = sub.add_parser("build", help="base + style + parts -> optimised GLB, then check")
     s.add_argument("character"); s.set_defaults(fn=cmd_build)
