@@ -1,0 +1,108 @@
+{
+  "name": "Robot maid (B-01)",
+  "about": "The robot maid who boots kevinjiang's portfolio (BentoSite) in its prologue: VRoid's CC0 AvatarSample E, recoloured black, white and orange, with porcelain skin, a mouthless face, glowing irises and rigid robot hardware.",
+  "base": {
+    "file": "assets/AvatarSample_E.vrm",
+    "source": "https://opengameart.org/content/vroid-studio-cc0-models (avatarsample_e.zip)",
+    "licence": "CC0 (VRoid Hub: modification, redistribution and commercial use allowed, no credit needed)"
+  },
+  "style": {
+    "script": "style/vroid_maid.py",
+    "notes": "A custom style script instead of the generic rules: porcelain face without a mouth, recoloured outfit, scripted hardware and sculpted robot hands. Env: MAID_HANDS=primitive, MAID_CLOTH=generic.",
+    "env": {
+      "MAID_EARS": "scripted"
+    }
+  },
+  "parts": [
+    {
+      "id": "ear",
+      "enabled": false,
+      "model": "parts/ear/model.glb",
+      "seed": 8,
+      "engine": "hunyuan_xiong",
+      "triangles": 3000,
+      "bone": "Head",
+      "mirror": true,
+      "offset": [
+        0.111,
+        0.04,
+        -0.022
+      ],
+      "rotation": [
+        0,
+        -90,
+        0
+      ],
+      "size": 0.11,
+      "glow": {
+        "hue": [
+          10,
+          45
+        ],
+        "strength": 3
+      },
+      "notes": "Generated ear unit (renders/lochara-generated-ears.png). To use it instead of the scripted ears: set enabled to true and style.env.MAID_EARS to \"none\"."
+    }
+  ],
+  "output": {
+    "textureSize": 1024,
+    "maxBytes": 1500000
+  },
+  "contract": {
+    "bones": [
+      "Hips",
+      "Spine",
+      "Spine1",
+      "Spine2",
+      "Neck",
+      "Head",
+      "LeftEye",
+      "RightEye",
+      "LeftArm",
+      "LeftForeArm",
+      "LeftHand",
+      "LeftHandIndex1",
+      "LeftHandIndex2",
+      "LeftHandIndex3",
+      "LeftHandMiddle1",
+      "LeftHandMiddle2",
+      "LeftHandMiddle3",
+      "LeftHandRing1",
+      "LeftHandRing2",
+      "LeftHandRing3",
+      "LeftHandPinky1",
+      "LeftHandPinky2",
+      "LeftHandPinky3",
+      "LeftHandThumb1",
+      "LeftHandThumb2",
+      "LeftHandThumb3",
+      "RightArm",
+      "RightForeArm",
+      "RightHand",
+      "RightHandIndex1",
+      "RightHandIndex2",
+      "RightHandIndex3",
+      "RightHandMiddle1",
+      "RightHandMiddle2",
+      "RightHandMiddle3",
+      "RightHandRing1",
+      "RightHandRing2",
+      "RightHandRing3",
+      "RightHandPinky1",
+      "RightHandPinky2",
+      "RightHandPinky3",
+      "RightHandThumb1",
+      "RightHandThumb2",
+      "RightHandThumb3"
+    ],
+    "morphs": [
+      "blink"
+    ],
+    "notes": "What BentoSite's src/components/Prologue/engine/robot.js loads: it throws on a missing bone and drives the blink morph (happy is also detected; irisOff isn't found on sample E)."
+  },
+  "export": [
+    {
+      "to": "${BENTOSITE:-../../../BentoSite}/public/prologue/robot-maid.glb"
+    }
+  ]
+}

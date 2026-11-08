@@ -1,0 +1,22 @@
+diff --git a/viewer/generate_api.py b/viewer/generate_api.py
+index 9064672..72ec754 100755
+--- a/viewer/generate_api.py
++++ b/viewer/generate_api.py
+@@ -1422,7 +1422,7 @@ def _rss_monitor(job: Job) -> None:
+ 
+ def _read_process(job: Job) -> None:
+     assert job.process is not None and job.process.stdout is not None
+-    spec = BACKENDS[job.backend_id]
++    spec = backend_spec(job.backend_id)
+     buffer = ""
+     while True:
+         chunk = job.process.stdout.read(4096)
+@@ -1680,7 +1680,7 @@ def failure_reason(log_lines, limit: int = 6) -> str | None:
+ 
+ 
+ def _run_job(job: Job) -> None:
+-    spec = BACKENDS[job.backend_id]
++    spec = backend_spec(job.backend_id)
+     args = [str(spec.interpreter), str(spec.wrapper), *spec.build_args(job)]
+     env = generate_child_env(job.backend_id)
+     if job.backend_id == "trellis" and spec.wrapper == WRAPPER:

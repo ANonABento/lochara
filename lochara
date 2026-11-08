@@ -1,0 +1,3 @@
+#!/bin/sh
+# Run the lochara CLI from a checkout (uv makes the environment on first use).
+exec uv run --quiet --project "$(dirname "$0")" lochara "$@"

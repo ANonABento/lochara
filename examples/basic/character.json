@@ -1,0 +1,75 @@
+{
+  "name": "Basic: a recipe-only character",
+  "base": {
+    "file": "assets/AvatarSample_E.vrm",
+    "source": "https://opengameart.org/content/vroid-studio-cc0-models (avatarsample_e.zip)",
+    "licence": "CC0"
+  },
+  "style": {
+    "bones": "mixamo",
+    "morphs": {
+      "detect": "vroid-eyes",
+      "keep": [
+        "blink",
+        "happy"
+      ]
+    },
+    "materials": [
+      {
+        "match": "FaceBrow",
+        "delete": true
+      },
+      {
+        "match": "HAIR",
+        "tint": [
+          0.35,
+          0.5,
+          1.0
+        ]
+      }
+    ]
+  },
+  "parts": [
+    {
+      "id": "ear",
+      "bone": "Head",
+      "enabled": true,
+      "model": "../robot-maid/parts/ear/model.glb",
+      "mirror": true,
+      "offset": [
+        0.111,
+        0.04,
+        -0.022
+      ],
+      "rotation": [
+        0,
+        -90,
+        0
+      ],
+      "size": 0.11,
+      "glow": {
+        "hue": [
+          10,
+          45
+        ],
+        "strength": 3
+      }
+    }
+  ],
+  "output": {
+    "textureSize": 1024,
+    "maxBytes": 3000000
+  },
+  "contract": {
+    "bones": [
+      "Head",
+      "RightHand",
+      "LeftHandIndex1"
+    ],
+    "morphs": [
+      "blink"
+    ]
+  },
+  "export": [],
+  "about": "The same CC0 VRoid base as the robot maid, styled only by recipe rules (Mixamo bone names, eye morphs, brows removed, hair tinted blue) with the maid's generated ear unit mirrored on both sides. No custom script."
+}

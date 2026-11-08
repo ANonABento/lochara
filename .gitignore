@@ -1,0 +1,11 @@
+# tools, downloads and model weights
+vendor/
+# your own characters live here; examples/ are tracked
+characters/
+# per character: builds and third-party base models
+build/
+examples/*/assets/
+examples/*/parts/*/candidates/
+__pycache__/
+.venv/
+.DS_Store

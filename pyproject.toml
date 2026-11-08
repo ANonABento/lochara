@@ -1,0 +1,15 @@
+[project]
+name = "lochara"
+version = "0.1.0"
+description = "Local character creation: a rigged base body plus generated parts, built into a web-ready GLB on your own machine."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = ["pillow>=10"]
+
+[project.scripts]
+lochara = "lochara.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
