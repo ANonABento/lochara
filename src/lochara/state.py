@@ -18,13 +18,16 @@ rule with something to do wins.
     input     something only a person can do (`say` says what)
     done      nothing left to do
 
-Commands in `run` are argument lists for the `lochara` command, never shell strings.
+Commands in `run` are argument lists for the `lochara` command, never shell strings. `<option>` is one of `options`;
+`<name>` is a new character's short id (lowercase letters, digits, -), chosen by whoever asked for it.
+
+Without a character, `start()` is the step before any: pick a character to continue, or make a new one.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-from . import handoff
+from . import bases, handoff
 from .character import Character, expand
 from .env import Problem
 
@@ -108,6 +111,11 @@ def next_step(c: Character) -> dict:
     """The first thing to do for this character, in pipeline order."""
     base = c.path(c.data.get("base", {}).get("file"))
     if not base or not base.exists():
+        stock = bases.available()
+        if stock and not c.data.get("base", {}).get("source"):
+            return _step(c, "base", "pick", f"Pick a base body to start from: {', '.join(b.name for b in stock)}.",
+                         show=[b.preview for b in stock if b.preview.exists()], options=[b.name for b in stock],
+                         run={"pick": ["base", c.id, "<option>"]})
         src = c.data.get("base", {}).get("source")
         return _step(c, "base", "input",
                      f"Put a rigged base model (VRM or GLB) at {base}" + (f" (from {src})." if src else "."))
@@ -142,9 +150,21 @@ def next_step(c: Character) -> dict:
                  show=[render])
 
 
+def start(characters: list[Character]) -> dict:
+    """Before any character: continue one, or start a new one."""
+    ids = [c.id for c in characters]
+    run = {"new": ["new", "<name>"]}
+    if not ids:
+        return {"character": None, "stage": "start", "waiting": "input", "show": [], "options": [], "run": run,
+                "say": "No characters yet. Start one: choose a short name for it and run `new <name>`."}
+    return {"character": None, "stage": "start", "waiting": "pick", "show": [], "options": ids,
+            "run": {"pick": ["next", "<option>"], **run},
+            "say": f"Characters: {', '.join(ids)}. Continue one, or start a new one with `new <name>`."}
+
+
 def describe(step: dict) -> str:
     """The step as text for a person."""
-    lines = [f"{step['character']}: {step['stage']} ({step['waiting']})", f"  {step['say']}"]
+    lines = [f"{step['character'] or 'lochara'}: {step['stage']} ({step['waiting']})", f"  {step['say']}"]
     lines += [f"  see: {p}" for p in step["show"]]
     if "request" in step:
         lines.append(f"  prompt: {step['request']['prompt']}")

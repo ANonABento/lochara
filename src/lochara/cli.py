@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -21,7 +22,7 @@ from . import assetfurnace as af
 from PIL import Image
 
 from . import glb, handoff, pictures, state
-from .character import Character, create, expand, find
+from .character import Character, create, expand, find, set_base
 from .env import REPO, Problem, blender, mflux, npx, run_blender, vroid_studio
 
 DEFAULT_ENGINE = "hunyuan_xiong"
@@ -72,10 +73,24 @@ def cmd_engines(a):
 
 
 # ------------------------------------------------------------------ characters
+NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
+
+
 def cmd_new(a):
+    if not a.path and not NAME.match(a.name):
+        raise Problem(f"name {a.name!r}: use lowercase letters, digits and - (it becomes the folder name)")
     root = Path(a.path) if a.path else REPO / "characters" / a.name
     c = create(root, a.title or a.name, a.base)
-    print(f"made {c.root}\nnext: put a rigged base model in assets/ (or pass --base), then `lochara build {a.name}`")
+    step = state.next_step(c)
+    print(f"made {c.root}\n{state.describe(step)}")
+    return {"wrote": [str(c.file)], "next": step}
+
+
+def cmd_base(a):
+    c = Character(find(a.character))
+    dest = set_base(c, a.base)
+    print(f"base: {dest}")
+    return {"wrote": [str(dest)]}
 
 
 def all_characters() -> list[Path]:
@@ -319,6 +334,10 @@ def cmd_deliver(a):
 
 
 def cmd_next(a):
+    if not a.character:
+        step = state.start([Character(f.parent) for f in all_characters()])
+        print(state.describe(step))
+        return {"next": step}
     step = state.next_step(Character(find(a.character)))
     print(state.describe(step))
     return {"next": step}
@@ -371,11 +390,13 @@ def main(argv=None):
     command("engines", "list picture -> 3D engines", cmd_engines)
 
     s = command("new", "make a character folder", cmd_new)
-    s.add_argument("name"); s.add_argument("--base", help="a rigged VRM/GLB to start from (copied into assets/)")
+    s.add_argument("name"); s.add_argument("--base", help="a stock base by name, or a rigged VRM/GLB to start from (copied into assets/)")
     s.add_argument("--title"); s.add_argument("--path", help="where (default characters/<name>)")
     command("list", "list characters", cmd_list)
-    s = command("next", "what to do next for a character", cmd_next)
-    s.add_argument("character")
+    s = command("base", "set a character's base body: a stock base by name, or a VRM/GLB file", cmd_base)
+    s.add_argument("character"); s.add_argument("base")
+    s = command("next", "what to do next for a character (none: list them, or start one)", cmd_next)
+    s.add_argument("character", nargs="?")
 
     def seeds(s):
         s.add_argument("-n", type=int, default=4, help="how many candidates")

@@ -5,7 +5,7 @@ one GLB. Read README.md for the idea and docs/workflow.md for the stages. The CL
 doctor` first).
 
 ## Rules
-- **Start from `lochara next <character>`.** It reads the folder and says the stage, what it's waiting for (`pick`,
+- **Start from `lochara next <character>`** (no character: it lists them, or says how to start one). It reads the folder and says the stage, what it's waiting for (`pick`,
   `approve`, `pictures`, `run`, `input`, `done`), what to show and the command to run. Don't guess the stage. Every
   command takes `--json` (one result on stdout, with the next step; progress on stderr) for scripts and chat runners.
 - **Stop at every checkpoint.** Concept picks, base body, each part's picture, each part's 3D result, the built

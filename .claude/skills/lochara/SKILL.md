@@ -36,12 +36,12 @@ Details: docs/agents.md.
 
 ## Where am I?
 `./lochara next <c>` says the stage, what it waits for and the command to run (`--json` for the same as data).
-Check it whenever you pick a character back up.
+Check it whenever you pick a character back up. `./lochara next` alone lists the characters, or says how to start one.
 
 ## Starting a character
-`./lochara new <name> [--base <rigged.vrm|glb>]` makes `characters/<name>/`. No base yet: suggest VRoid Studio
-(free; export VRM 0.x or 1.0) or a CC0 VRoid sample (https://opengameart.org/content/vroid-studio-cc0-models), and
-offer `lochara concept` to design against.
+`./lochara new <name> [--base <stock base | rigged.vrm|glb>]` makes `characters/<name>/`. No base yet: `next` offers
+the CC0 VRoid samples in vendor/vroid as stock bases (pictures to pick from; `lochara base <c> <name>` sets one), or
+suggest VRoid Studio (free; export VRM 0.x or 1.0), and offer `lochara concept` to design against.
 
 Set the contract early: ask what app will load the character and which bones and morphs its code needs
 (e.g. Mixamo names for Mixamo animations, `blink` for blinking), and put them in `contract`.

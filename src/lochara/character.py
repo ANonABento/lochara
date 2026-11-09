@@ -82,14 +82,27 @@ def create(root: Path, name: str, base: str | None) -> Character:
         (root / d).mkdir(parents=True, exist_ok=True)
     data = json.loads(json.dumps(TEMPLATE))
     data["name"] = name
-    if base:
-        src = Path(base).expanduser().resolve()
-        if not src.is_file():
-            raise Problem(f"no file {base}")
-        dest = root / "assets" / src.name
-        if src != dest:
-            dest.write_bytes(src.read_bytes())
-        data["base"]["file"] = f"assets/{src.name}"
     (root / "character.json").write_text(json.dumps(data, indent=2) + "\n")
     (root / ".gitignore").write_text("build/\nassets/\nparts/*/candidates/\n")
-    return Character(root)
+    c = Character(root)
+    if base:
+        set_base(c, base)
+    return c
+
+
+def set_base(c: Character, base: str) -> Path:
+    """Copy a base model into the character's assets and point the recipe at it: a stock base by name, or a file."""
+    from . import bases
+    stock = bases.stock(base)
+    src = stock.path if stock else Path(base).expanduser().resolve()
+    if not src.is_file():
+        names = ", ".join(b.name for b in bases.available()) or "none downloaded"
+        raise Problem(f"no file {base} (stock bases: {names})")
+    dest = c.root / "assets" / src.name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if src != dest.resolve():
+        dest.write_bytes(src.read_bytes())
+    c.data["base"] = {"file": f"assets/{src.name}",  # a file of your own: fill in where it's from and its licence
+                      "source": stock.source if stock else "", "licence": stock.licence if stock else ""}
+    c.save()
+    return dest

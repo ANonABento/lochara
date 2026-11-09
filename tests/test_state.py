@@ -11,8 +11,9 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from lochara import handoff, state
-from lochara.character import Character, create
+from lochara import bases, handoff, state
+from lochara.character import Character, create, set_base
+from lochara.env import Problem
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -50,10 +51,47 @@ def step(c: Character) -> dict:
     return state.next_step(Character(c.root))
 
 
-def test_no_base(tmp_path: Path):
+@pytest.fixture
+def stock(tmp_path: Path, monkeypatch) -> Path:
+    """One downloaded stock base (sample-e), in a throwaway vendor folder."""
+    folder = tmp_path / "vroid"
+    monkeypatch.setattr(bases, "FOLDER", folder)
+    (folder / "avatarsample_e").mkdir(parents=True)
+    (folder / "avatarsample_e" / "AvatarSample_E.vrm").write_bytes(b"glTF")
+    png(folder / "avatarsample_e_full.png")
+    return folder
+
+
+def test_no_base(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(bases, "FOLDER", tmp_path / "nothing")
     c = create(tmp_path / "bare", "Bare", None)
     s = step(c)
     assert (s["stage"], s["waiting"]) == ("base", "input")
+
+
+def test_pick_a_stock_base(tmp_path: Path, stock: Path):
+    c = create(tmp_path / "bare", "Bare", None)
+    s = step(c)
+    assert (s["stage"], s["waiting"], s["options"]) == ("base", "pick", ["sample-e"])
+    assert s["show"] == [str(stock / "avatarsample_e_full.png")]
+    assert s["run"]["pick"] == ["base", "bare", "<option>"]
+
+    set_base(Character(c.root), "sample-e")
+    c = Character(c.root)
+    assert c.data["base"]["licence"] == "CC0" and (c.root / "assets" / "AvatarSample_E.vrm").exists()
+    assert step(c)["stage"] == "build"
+
+
+def test_unknown_base(tmp_path: Path, stock: Path):
+    c = create(tmp_path / "bare", "Bare", None)
+    with pytest.raises(Problem, match="stock bases: sample-e"):
+        set_base(c, "sample-z")
+
+
+def test_start():
+    assert state.start([])["waiting"] == "input"
+    s = state.start([Character(REPO / "examples" / "basic")])
+    assert (s["waiting"], s["options"], s["run"]["pick"]) == ("pick", ["basic"], ["next", "<option>"])
 
 
 def test_part_rules_in_order(char: Character):

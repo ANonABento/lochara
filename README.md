@@ -38,7 +38,10 @@ git clone https://github.com/ANonABento/lochara && cd lochara
 ./lochara engines                        # 3D engines, their sizes and licences
 ./lochara setup engine hunyuan_xiong --yes   # 13.9 GB of weights; check the licence first
 
-./lochara new mychar --base ~/Downloads/MyAvatar.vrm     # a rigged VRM/GLB, e.g. exported from VRoid Studio
+./lochara new mychar --base ~/Downloads/MyAvatar.vrm     # a rigged VRM/GLB, e.g. exported from VRoid Studio,
+                                                          # or a stock base: --base sample-e (CC0 VRoid samples;
+                                                          # unzip them from opengameart.org/content/vroid-studio-cc0-models
+                                                          # into vendor/vroid/<zip name>/)
 ./lochara concept mychar "a knight with a fox mask"      # optional: concepts to design the base against
 ./lochara part draw mychar visor "a sleek black visor with a cyan light strip"
 ./lochara part pick mychar visor 377                      # the seed you liked from the sheet
@@ -49,7 +52,7 @@ git clone https://github.com/ANonABento/lochara && cd lochara
 ./lochara export mychar --to ~/my-game/assets/mychar.glb
 ```
 
-Lost your place? `./lochara next mychar` says what's next and the command for it (`--json` on any command gives
+Lost your place? `./lochara next mychar` says what's next (`./lochara next` alone lists your characters) and the command for it (`--json` on any command gives
 one JSON result, for scripts and chat bots).
 
 Pictures from another tool (a hosted image model, an agent, your own art app): add `--via handoff` to `concept` or

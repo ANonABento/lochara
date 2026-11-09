@@ -6,7 +6,9 @@ built on one. The agent does the work; you make the choices at each checkpoint.
 
 ## Where a character stands: `lochara next`
 `lochara next <character>` reads the character's folder and says the stage, what it's waiting for, what to show and
-the command to run. With `--json` it's data, for a script or a chat runner:
+the command to run; without a character it lists them (`pick`, run `next <option>`) or offers `new <name>`. A new
+character with no base gets a `pick` of the stock bases (CC0 VRoid samples in vendor/vroid, previews shown), run as
+`base <character> <option>`. With `--json` it's data, for a script or a chat runner:
 
 ```json
 {"ok": true, "command": "next",
