@@ -31,8 +31,12 @@ app, attach them to your reply instead.
 ## Pictures made elsewhere (handoff)
 `--via handoff` on `concept` and `part draw` writes a request instead of drawing (add `--ref design.png`).
 `lochara requests` shows it; make the pictures with whatever the user chose (Choomfie: `ask_brain` to Waymond with
-`save_to`), then `lochara deliver <c> <request-id> <files>`; pick by name (`h1`, `h2`, ...). Details:
-docs/agents.md.
+`save_to`), then `lochara deliver <c> <request-id> --from <that folder>`; pick by name (`h1`, `h2`, ...).
+Details: docs/agents.md.
+
+## Where am I?
+`./lochara next <c>` says the stage, what it waits for and the command to run (`--json` for the same as data).
+Check it whenever you pick a character back up.
 
 ## Starting a character
 `./lochara new <name> [--base <rigged.vrm|glb>]` makes `characters/<name>/`. No base yet: suggest VRoid Studio

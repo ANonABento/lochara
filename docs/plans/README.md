@@ -38,8 +38,8 @@ Hunyuan3D-MLX, VRoid Studio, the CC0 template (AvatarSample E).
 Run ComfyUI: `vendor/comfyui/.venv/bin/python vendor/comfyui/main.py --listen 127.0.0.1 --port 8188`.
 
 ## Smaller items
-- Chat driving, Claude or Waymond, through one pipeline runner in Choomfie ([plan](drivers.md)). Step 1 (`askBrain`,
-  owner-only in code, background wait, `conversation`) is in choomfie PR #101; next is `lochara next --json`.
+- Chat driving, Claude or Waymond, through one pipeline runner in Choomfie ([plan](drivers.md)). Steps 1 (`askBrain`,
+  choomfie #101) and 2 (`lochara next --json`) are done; next is the runner in Choomfie.
 - Spring bones from VRM bases are dropped today (VRM-only data); keep them when the output is VRM.
 - Report the AssetFurnace engine-lookup bug upstream and drop `third_party/assetfurnace/backend-spec.patch`.
 - AssetFurnace's own Pixal3D and TRELLIS.2 builds need Xcode (an Apple ID); ComfyUI's Pixal3D port doesn't.

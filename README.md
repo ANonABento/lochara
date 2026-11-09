@@ -49,8 +49,12 @@ git clone https://github.com/ANonABento/lochara && cd lochara
 ./lochara export mychar --to ~/my-game/assets/mychar.glb
 ```
 
+Lost your place? `./lochara next mychar` says what's next and the command for it (`--json` on any command gives
+one JSON result, for scripts and chat bots).
+
 Pictures from another tool (a hosted image model, an agent, your own art app): add `--via handoff` to `concept` or
-`part draw`, then `./lochara requests` and `./lochara deliver mychar <request-id> <files>` ([docs/agents.md](docs/agents.md)).
+`part draw`, then `./lochara requests` and `./lochara deliver mychar <request-id> --from <folder>`
+([docs/agents.md](docs/agents.md)).
 
 ## What you need
 | Tool | Used for | |

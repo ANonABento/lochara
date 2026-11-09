@@ -42,19 +42,21 @@ fixing and extending lochara itself.
 ### L1 lochara: a state any driver can read
 Waymond doesn't load `AGENTS.md`, and a runner can't parse prose. So lochara says what's next, in JSON.
 
-- **`lochara next <char> [--json]`**: where the character is and what happens next:
+- **`lochara next <char> [--json]`** (done, `src/lochara/state.py`): where the character is and what happens next:
   ```json
-  {"character": "aiko", "stage": "views", "waiting": "pick",
-   "say": "Pick the front view: h1-h4. The others are drawn from it.",
-   "show": ["/…/aiko/views/front/sheet.png"],
-   "options": ["h1", "h2", "h3", "h4"],
-   "run": {"pick": "lochara views pick aiko front <option>"},
-   "needs_pictures": {"request": "20261108-…-views", "prompt": "…", "references": ["…"], "count": 4}}
+  {"character": "aiko", "stage": "parts", "waiting": "pick",
+   "say": "Pick a picture for visor: h1, h2, s12.",
+   "show": ["/…/aiko/parts/visor/candidates/sheet.png"],
+   "options": ["h1", "h2", "s12"],
+   "run": {"pick": ["part", "pick", "aiko", "visor", "<option>"], "redraw": ["part", "draw", "aiko", "visor"]}}
   ```
-  `waiting` is one of `pick`, `approve`, `pictures` (a handoff request is open), `job` (something is running),
-  `done`. `show` is what to post. Every stage command adds its entry as it's built (views first).
-- **`--json` on every command**: `{ok, wrote: [...], show: [...], next: …}`, errors as `{ok: false, problem}`.
-- **`lochara deliver --from <folder>`**: deliver every image in a folder (what a chat hands over).
+  `waiting` is one of `pick`, `approve`, `pictures` (a handoff request is open; the step carries `request`), `run`
+  (nothing to decide: run `run.next`, maybe for minutes), `input` (only a person can do it), `done`. `show` is what
+  to post. Commands are argument lists, never shell strings. Read from the folder every time, never stored. Each
+  stage adds its rule as it's built (views next).
+- **`--json` on every command** (done): `{ok, command, show?, wrote?, …, next}` on stdout, progress on stderr (the
+  file descriptor, so Blender and mflux can't write into it), errors as `{ok: false, problem}` with exit 1.
+- **`lochara deliver --from <folder>`** (done): deliver every picture in a folder (what a chat hands over).
 - Long steps (3D, paint, bake) stay plain commands; the runner (L3) makes them jobs. lochara holds no keys and never
   names a chat app.
 
@@ -114,7 +116,8 @@ needs read-only or fixed-folder limits and the owner's approval in Discord.
     background), reply with them, then `pipeline_run lochara deliver <char> <request> {files}` with `files:
     last_reply`.
   - At `pick`/`approve`: the runner has posted the sheet; ask the user, then run what `run` says with their answer.
-  - At `job`: say what's running and stop; the result arrives as a note.
+  - At `run`: run `run.next`; for a long one say what's running and stop; the result arrives as a note.
+  - At `input`: tell the user what `say` says.
   - Don't run anything not in `next`'s output; report problems as they are.
 - Waymond's limits: a turn stops after several tool calls; no polling loops (notes instead); its sandbox isn't used
   for lochara at all.
@@ -133,8 +136,8 @@ automatic; on the Claude path it's `ask_brain(conversation=…)`.
 ## Order of work
 | Step | What | Needs |
 |---|---|---|
-| 1 | L2: `askBrain()`, owner check, background wait, `conversation` (update #101) | nothing |
-| 2 | L1: `next --json` for what exists today (concept, part draw/pick, handoff, render, export) + `--json` | nothing |
+| 1 | ✅ L2: `askBrain()`, owner check, background wait, `conversation` (choomfie #101, merged) | nothing |
+| 2 | ✅ L1: `next --json` for what exists today (base, handoff, part draw/pick/model/place, build, render, export) + `--json` | nothing |
 | 3 | L3: runner, jobs, posting, notes, thread file store (new Choomfie PR, stacked on #101) | step 1 |
 | 4 | L4: `chatRoots`, Claude path end to end on a concept + part | steps 2–3 |
 | 5 | L5: tunnel check, remote allowlist, `character` mode; Waymond path end to end on the same | step 4 |

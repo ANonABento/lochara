@@ -5,6 +5,9 @@ one GLB. Read README.md for the idea and docs/workflow.md for the stages. The CL
 doctor` first).
 
 ## Rules
+- **Start from `lochara next <character>`.** It reads the folder and says the stage, what it's waiting for (`pick`,
+  `approve`, `pictures`, `run`, `input`, `done`), what to show and the command to run. Don't guess the stage. Every
+  command takes `--json` (one result on stdout, with the next step; progress on stderr) for scripts and chat runners.
 - **Stop at every checkpoint.** Concept picks, base body, each part's picture, each part's 3D result, the built
   character: show the user the image (sheet, preview or render) and wait. Never choose for them, never continue past
   a checkpoint on your own.
@@ -19,7 +22,7 @@ doctor` first).
 - **In a chat app** (Discord through Choomfie, ...), the user can't see your terminal: attach every checkpoint's image
   (sheet, preview, render) to your reply, and keep the text short. See `docs/agents.md`.
 - **Pictures from elsewhere:** when the user wants a hosted image model, use `--via handoff` and fill the request
-  with `lochara deliver` (`docs/agents.md`). Say that the design is uploaded to that service.
+  with `lochara deliver` (`--from <folder>` delivers every picture in it; `docs/agents.md`). Say that the design is uploaded to that service.
 - **Fixes are numbers.** Placement, size, glow and style go in `character.json`. Change code only for things a
   recipe can't express, and then prefer a character's own `style.script` over changing lochara.
 - **Never commit** `vendor/`, `assets/`, `build/` or third-party models. Note the base model's licence in the recipe.
@@ -43,5 +46,5 @@ doctor` first).
 plain instructions.
 
 ## Checks
-`./lochara doctor`; after changing the Blender stages, `./lochara build robot-maid && ./lochara check robot-maid`
+`uv run pytest` (state rules and the `--json` contract); `./lochara doctor`; after changing the Blender stages, `./lochara build robot-maid && ./lochara check robot-maid`
 (needs the example's CC0 base, see examples/robot-maid/README.md) and look at `./lochara render robot-maid`.

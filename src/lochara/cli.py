@@ -2,6 +2,9 @@
 
 A character = a rigged base body (VRoid Studio, or any rigged VRM/GLB) + rigid parts generated from text
 (FLUX -> AssetFurnace), each attached to one bone, built into one web-ready GLB.
+
+`lochara next <character>` says what to do next. Every command takes --json: one JSON result on stdout (what it
+showed, and the next step), its progress on stderr.
 """
 from __future__ import annotations
 
@@ -17,7 +20,7 @@ from pathlib import Path
 from . import assetfurnace as af
 from PIL import Image
 
-from . import glb, handoff, pictures
+from . import glb, handoff, pictures, state
 from .character import Character, create, expand, find
 from .env import REPO, Problem, blender, mflux, npx, run_blender, vroid_studio
 
@@ -100,10 +103,11 @@ def cmd_concept(a):
         req = handoff.create(c, "concept", prompt, out, f"{a.tag}-h", a.n, [Path(r) for r in a.ref or []], (768, 1344),
                              notes="full body, whole figure in frame, plain background")
         print(handoff.describe(req))
-        return
+        return {"request": req["id"]}
     made = pictures.draw(prompt, out, seeds_for(a), (768, 1344), prefix=f"{a.tag}-s")
     s = pictures.sheet(made, out / f"{a.tag}-sheet.png", tile=384)
     print(f"sheet: {s}")
+    return {"show": [str(s)]}
 
 
 def cmd_part(a):
@@ -127,10 +131,12 @@ def cmd_part(a):
                                  notes="one isolated object, whole object in frame, plain background")
             print(handoff.describe(req))
             print(f"after delivery: lochara part pick {c.id} {a.id} h<n>")
-            return
+            return {"request": req["id"]}
         pictures.draw(prompt, d / "candidates", seeds_for(a), (1024, 1024))
-        print(f"sheet: {candidate_sheet(d)}")
+        sheet = candidate_sheet(d)
+        print(f"sheet: {sheet}")
         print(f"next: lochara part pick {c.id} {a.id} <seed>")
+        return {"show": [str(sheet)]}
     elif a.action == "pick":
         name = f"s{a.seed}" if str(a.seed).isdigit() else str(a.seed)
         found = sorted((d / "candidates").glob(f"{name}.*"))
@@ -144,8 +150,8 @@ def cmd_part(a):
                 part.pop("seed", None)
                 part["picture"] = name
             c.save()
-        src = found[0]
-        print(f"picked {src.name}. next: lochara part model {c.id} {a.id}")
+        print(f"picked {found[0].name}. next: lochara part model {c.id} {a.id}")
+        return {"show": [str(d / "picture.png")]}
     elif a.action == "model":
         pic = d / "picture.png"
         if not pic.exists():
@@ -161,6 +167,7 @@ def cmd_part(a):
         c.save()
         print(f"model: {d / 'model.glb'}\npreview: {d / 'preview.png'}")
         print(f"next: set its bone/offset/size in character.json, enable it, then lochara build {c.id}")
+        return {"show": [str(d / "preview.png")]}
 
 
 def optimise(src: Path, dest: Path, texture_size: int) -> None:
@@ -203,7 +210,7 @@ def cmd_build(a):
     print("[3/4] optimise")
     optimise(raw, out, data.get("output", {}).get("textureSize", 1024))
     print("[4/4] check")
-    report(c, out)
+    return {"contract_ok": report(c, out)}
 
 
 def report(c: Character, path: Path) -> bool:
@@ -223,7 +230,8 @@ def cmd_check(a):
     path = Path(a.file) if a.file else c.build / f"{c.id}.glb"
     if not path.exists():
         raise Problem(f"no {path}: run lochara build {c.id}")
-    sys.exit(0 if report(c, path) else 1)
+    ok = report(c, path)
+    return {"contract_ok": ok, "exit": 0 if ok else 1}
 
 
 def cmd_render(a):
@@ -239,6 +247,7 @@ def cmd_render(a):
     run_blender("render", job)
     if a.open:
         subprocess.run(["open", str(out)])
+    return {"show": [str(out)]}
 
 
 def cmd_export(a):
@@ -251,63 +260,122 @@ def cmd_export(a):
     targets = a.to or [t["to"] for t in c.data.get("export", [])]
     if not targets:
         raise Problem("nowhere to export: add \"export\": [{\"to\": \"...\"}] to character.json or pass --to")
+    wrote = []
     for t in targets:
         dest = expand(t, c.root)
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(src, dest)
         print(f"exported {dest}")
+        wrote.append(str(dest))
+    return {"wrote": wrote}
 
 
 # ------------------------------------------------------------------ parser
 def candidate_sheet(d: Path) -> Path:
-    files = sorted(p for p in (d / "candidates").iterdir() if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")
+    files = sorted(p for p in (d / "candidates").iterdir() if p.suffix.lower() in state.PICTURE_EXTS
                    and p.stem != "sheet")
     return pictures.sheet(files, d / "candidates" / "sheet.png")
 
 
 def cmd_requests(a):
     chars = [Character(find(a.character))] if a.character else [Character(f.parent) for f in all_characters()]
-    any_open = False
-    for c in chars:
-        for req in handoff.open_requests(c):
-            any_open = True
-            print(handoff.describe(req) + "\n")
-    if not any_open:
+    reqs = [dict(req, character=c.id) for c in chars for req in handoff.open_requests(c)]
+    for req in reqs:
+        print(handoff.describe(req) + "\n")
+    if not reqs:
         print("no open requests")
+    return {"requests": reqs}
+
+
+def delivered_files(a) -> list[Path]:
+    """The files named, plus every picture in --from (in name order)."""
+    files = [Path(f) for f in a.files]
+    if a.source:
+        folder = Path(a.source)
+        if not folder.is_dir():
+            raise Problem(f"not a folder: {folder}")
+        files += sorted(p for p in folder.iterdir() if p.suffix.lower() in state.PICTURE_EXTS)
+    if not files:
+        raise Problem("nothing to deliver: name the files, or a folder with --from")
+    return files
 
 
 def cmd_deliver(a):
     c = Character(find(a.character))
-    placed = handoff.deliver(c, a.request, [Path(f) for f in a.files])
+    placed = handoff.deliver(c, a.request, delivered_files(a))
     req = handoff.load(c, a.request)
     for p in placed:
         print(f"  {p}")
     dest = Path(req["deliver_to"])
     if req["kind"] == "concept":
         tag = req["prefix"].rsplit("-", 1)[0]
-        files = sorted(p for p in dest.glob(f"{tag}-*") if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp"))
-        print(f"sheet: {pictures.sheet(files, dest / f'{tag}-sheet.png', tile=384)}")
+        files = sorted(p for p in dest.glob(f"{tag}-*") if p.suffix.lower() in state.PICTURE_EXTS)
+        sheet = pictures.sheet(files, dest / f"{tag}-sheet.png", tile=384)
     else:
-        print(f"sheet: {candidate_sheet(dest.parent)}")
+        sheet = candidate_sheet(dest.parent)
         print(f"next: lochara part pick {c.id} {req['kind'].removeprefix('part-')} {placed[0].stem}")
+    print(f"sheet: {sheet}")
+    return {"wrote": [str(p) for p in placed], "show": [str(sheet)]}
+
+
+def cmd_next(a):
+    step = state.next_step(Character(find(a.character)))
+    print(state.describe(step))
+    return {"step": step}
+
+
+def run_json(a) -> int:
+    """Run the command with its progress on stderr, then print one JSON result on stdout.
+
+    Redirects file descriptor 1, not just sys.stdout, so tools the command runs (Blender, mflux) can't write into
+    the JSON either.
+    """
+    sys.stdout.flush()
+    saved = os.dup(1)
+    os.dup2(2, 1)
+    try:
+        try:
+            out = {"ok": True, "command": a.cmd, **(a.fn(a) or {})}
+        except Problem as e:
+            out = {"ok": False, "command": a.cmd, "problem": str(e.code).removeprefix("lochara: ")}
+        character = getattr(a, "character", None)
+        if character and "step" not in out:
+            try:
+                out["next"] = state.next_step(Character(find(character)))
+            except Problem:
+                pass
+    finally:
+        sys.stdout.flush()
+        os.dup2(saved, 1)
+        os.close(saved)
+    code = out.pop("exit", 0 if out["ok"] else 1)
+    print(json.dumps(out, indent=1, ensure_ascii=False))
+    return code
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="lochara", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--json", action="store_true", help="print one JSON result (progress goes to stderr)")
 
-    sub.add_parser("doctor", help="check the tools lochara needs").set_defaults(fn=cmd_doctor)
-    s = sub.add_parser("setup", help="install AssetFurnace, or download a 3D engine's weights")
+    def command(name: str, help: str, fn) -> argparse.ArgumentParser:
+        s = sub.add_parser(name, help=help, parents=[common])
+        s.set_defaults(fn=fn)
+        return s
+
+    command("doctor", "check the tools lochara needs", cmd_doctor)
+    s = command("setup", "install AssetFurnace, or download a 3D engine's weights", cmd_setup)
     s.add_argument("what", choices=["assetfurnace", "engine"]); s.add_argument("engine", nargs="?")
     s.add_argument("--yes", action="store_true", help="really download (engines are several GB)")
-    s.set_defaults(fn=cmd_setup)
-    sub.add_parser("engines", help="list picture -> 3D engines").set_defaults(fn=cmd_engines)
+    command("engines", "list picture -> 3D engines", cmd_engines)
 
-    s = sub.add_parser("new", help="make a character folder")
+    s = command("new", "make a character folder", cmd_new)
     s.add_argument("name"); s.add_argument("--base", help="a rigged VRM/GLB to start from (copied into assets/)")
     s.add_argument("--title"); s.add_argument("--path", help="where (default characters/<name>)")
-    s.set_defaults(fn=cmd_new)
-    sub.add_parser("list", help="list characters").set_defaults(fn=cmd_list)
+    command("list", "list characters", cmd_list)
+    s = command("next", "what to do next for a character", cmd_next)
+    s.add_argument("character")
 
     def seeds(s):
         s.add_argument("-n", type=int, default=4, help="how many candidates")
@@ -319,40 +387,41 @@ def main(argv=None):
                        help="local: draw with FLUX here; handoff: write a request for another tool or agent to fill")
         s.add_argument("--ref", nargs="+", help="reference pictures for a handoff (the design)")
 
-    s = sub.add_parser("concept", help="draw full-body concepts")
+    s = command("concept", "draw full-body concepts", cmd_concept)
     s.add_argument("character"); s.add_argument("prompt"); s.add_argument("--tag", default="c")
-    seeds(s); via(s); s.set_defaults(fn=cmd_concept)
+    seeds(s); via(s)
 
-    s = sub.add_parser("part", help="draw / pick / model a part")
+    s = command("part", "draw / pick / model a part", cmd_part)
     s.add_argument("action", choices=["draw", "pick", "model"]); s.add_argument("character"); s.add_argument("id")
     s.add_argument("prompt", nargs="?", help="draw: what the part looks like")
     s.add_argument("seed", nargs="?", help="pick: the seed of the candidate")
     s.add_argument("--engine", default=DEFAULT_ENGINE); s.add_argument("--triangles", type=int, default=3000)
     seeds(s); via(s)
-    s.set_defaults(fn=cmd_part)
 
-    s = sub.add_parser("requests", help="list open picture requests (handoffs)")
-    s.add_argument("character", nargs="?"); s.set_defaults(fn=cmd_requests)
-    s = sub.add_parser("deliver", help="fill a picture request with files made elsewhere")
-    s.add_argument("character"); s.add_argument("request"); s.add_argument("files", nargs="+")
-    s.set_defaults(fn=cmd_deliver)
+    s = command("requests", "list open picture requests (handoffs)", cmd_requests)
+    s.add_argument("character", nargs="?")
+    s = command("deliver", "fill a picture request with files made elsewhere", cmd_deliver)
+    s.add_argument("character"); s.add_argument("request"); s.add_argument("files", nargs="*")
+    s.add_argument("--from", dest="source", help="deliver every picture in this folder")
 
-    s = sub.add_parser("build", help="base + style + parts -> optimised GLB, then check")
-    s.add_argument("character"); s.set_defaults(fn=cmd_build)
-    s = sub.add_parser("check", help="check a build against the character's contract")
-    s.add_argument("character"); s.add_argument("--file"); s.set_defaults(fn=cmd_check)
-    s = sub.add_parser("render", help="front / three-quarter / back contact sheet")
+    s = command("build", "base + style + parts -> optimised GLB, then check", cmd_build)
+    s.add_argument("character")
+    s = command("check", "check a build against the character's contract", cmd_check)
+    s.add_argument("character"); s.add_argument("--file")
+    s = command("render", "front / three-quarter / back contact sheet", cmd_render)
     s.add_argument("character"); s.add_argument("--file"); s.add_argument("--name", default="latest")
     s.add_argument("--focus", help="a bone to frame, e.g. Head"); s.add_argument("--span", type=float, default=0.45)
-    s.add_argument("--open", action="store_true"); s.set_defaults(fn=cmd_render)
-    s = sub.add_parser("export", help="copy the build to the character's export targets")
+    s.add_argument("--open", action="store_true")
+    s = command("export", "copy the build to the character's export targets", cmd_export)
     s.add_argument("character"); s.add_argument("--to", nargs="+"); s.add_argument("--force", action="store_true")
-    s.set_defaults(fn=cmd_export)
 
     a = p.parse_args(argv)
     if a.cmd == "part" and a.action == "pick":
         a.seed, a.prompt = a.prompt, None
-    a.fn(a)
+    if a.json:
+        sys.exit(run_json(a))
+    result = a.fn(a) or {}
+    sys.exit(result.get("exit", 0))
 
 
 if __name__ == "__main__":
