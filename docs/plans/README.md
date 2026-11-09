@@ -39,7 +39,8 @@ Run ComfyUI: `vendor/comfyui/.venv/bin/python vendor/comfyui/main.py --listen 12
 
 ## Smaller items
 - Chat driving, Claude or Waymond, through one pipeline runner in Choomfie ([plan](drivers.md)). Steps 1 (`askBrain`,
-  choomfie #101) and 2 (`lochara next --json`) are done; next is the runner in Choomfie.
+  choomfie #101), 2 (`lochara next --json`) and 3 (the runner, choomfie #104) are done; next is trying the Claude path
+  end to end.
 - Spring bones from VRM bases are dropped today (VRM-only data); keep them when the output is VRM.
 - Report the AssetFurnace engine-lookup bug upstream and drop `third_party/assetfurnace/backend-spec.patch`.
 - AssetFurnace's own Pixal3D and TRELLIS.2 builds need Xcode (an Apple ID); ComfyUI's Pixal3D port doesn't.

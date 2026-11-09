@@ -321,7 +321,7 @@ def cmd_deliver(a):
 def cmd_next(a):
     step = state.next_step(Character(find(a.character)))
     print(state.describe(step))
-    return {"step": step}
+    return {"next": step}
 
 
 def run_json(a) -> int:
@@ -339,7 +339,7 @@ def run_json(a) -> int:
         except Problem as e:
             out = {"ok": False, "command": a.cmd, "problem": str(e.code).removeprefix("lochara: ")}
         character = getattr(a, "character", None)
-        if character and "step" not in out:
+        if character and "next" not in out:
             try:
                 out["next"] = state.next_step(Character(find(character)))
             except Problem:

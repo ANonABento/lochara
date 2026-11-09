@@ -10,7 +10,7 @@ the command to run. With `--json` it's data, for a script or a chat runner:
 
 ```json
 {"ok": true, "command": "next",
- "step": {"character": "aiko", "stage": "parts", "waiting": "pick",
+ "next": {"character": "aiko", "stage": "parts", "waiting": "pick",
           "say": "Pick a picture for visor: h1, h2, s12.",
           "show": ["/…/aiko/parts/visor/candidates/sheet.png"], "options": ["h1", "h2", "s12"],
           "run": {"pick": ["part", "pick", "aiko", "visor", "<option>"], "redraw": ["part", "draw", "aiko", "visor"]}}}

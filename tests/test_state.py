@@ -138,7 +138,7 @@ def test_json_result_and_next(char: Character):
     r = lochara("next", str(char.root), "--json")
     assert r.returncode == 0
     out = json.loads(r.stdout)  # stdout is only the JSON
-    assert out["ok"] and out["step"]["stage"] == "build"
+    assert out["ok"] and out["next"]["stage"] == "build"
     assert "build" in r.stderr  # the text went to stderr
 
 

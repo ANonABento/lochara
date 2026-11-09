@@ -138,7 +138,7 @@ automatic; on the Claude path it's `ask_brain(conversation=…)`.
 |---|---|---|
 | 1 | ✅ L2: `askBrain()`, owner check, background wait, `conversation` (choomfie #101, merged) | nothing |
 | 2 | ✅ L1: `next --json` for what exists today (base, handoff, part draw/pick/model/place, build, render, export) + `--json` | nothing |
-| 3 | L3: runner, jobs, posting, notes, thread file store (new Choomfie PR, stacked on #101) | step 1 |
+| 3 | ✅ L3: runner, jobs, posting, notes, thread file store (choomfie #104, draft) | step 1 |
 | 4 | L4: `chatRoots`, Claude path end to end on a concept + part | steps 2–3 |
 | 5 | L5: tunnel check, remote allowlist, `character` mode; Waymond path end to end on the same | step 4 |
 | 6 | Each new stage (views S1, 3D S2, …) adds its `next` entry; both paths get it with no Choomfie change | spikes |
