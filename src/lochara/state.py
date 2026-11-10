@@ -81,7 +81,8 @@ def _mtime(p: Path | None) -> float:
 
 
 def _pictures(d: Path) -> list[Path]:
-    return sorted(p for p in d.iterdir() if p.suffix.lower() in PICTURE_EXTS and p.stem != "sheet") if d.is_dir() else []
+    return sorted(p for p in d.iterdir() if p.suffix.lower() in PICTURE_EXTS
+                  and p.stem != "sheet" and not p.stem.endswith("-sheet")) if d.is_dir() else []
 
 
 def _request_step(c: Character, req: dict) -> dict:
@@ -149,7 +150,7 @@ def _art_step(c: Character, has_base: bool) -> dict:
     sheet = concepts / "c-sheet.png"
     later = have or has_base  # skipping just carries on; before any art or body it goes to the body
     return _step(c, "art", "pictures",
-                 f"{len(have)} art picture(s) so far: add more, or carry on." if have else
+                 f"Art so far: {', '.join(p.name for p in have)}. Add more, or carry on." if have else
                  "Add art to design it from: pictures from this chat or your computer. Or skip and start from a "
                  "sample body.",
                  show=[sheet] if sheet.exists() else have,
