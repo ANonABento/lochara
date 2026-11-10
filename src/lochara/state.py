@@ -18,6 +18,8 @@ rule with something to do wins.
     input     something only a person can do (`say` says what)
     done      nothing left to do
 
+`run` may also hold `refresh` (`next` again), on steps that wait for a person: a chat runner shows it as a button.
+
 Commands in `run` are argument lists for the `lochara` command, never shell strings. `<option>` is one of `options`;
 `<name>` is a new character's short id (lowercase letters, digits, -), chosen by whoever asked for it.
 
@@ -38,8 +40,11 @@ WAITING = ("pick", "approve", "pictures", "run", "input", "done")
 def _step(c: Character, stage: str, waiting: str, say: str, show: list[Path] | None = None,
           options: list[str] | None = None, run: dict[str, list[str]] | None = None, **extra) -> dict:
     assert waiting in WAITING, waiting
+    run = dict(run or {})
+    if waiting in ("input", "approve", "done"):
+        run.setdefault("refresh", ["next", c.id])  # look again once a person has done their part
     return {"character": c.id, "stage": stage, "waiting": waiting, "say": say,
-            "show": [str(p) for p in show or []], "options": options or [], "run": run or {}, **extra}
+            "show": [str(p) for p in show or []], "options": options or [], "run": run, **extra}
 
 
 def _mtime(p: Path | None) -> float:

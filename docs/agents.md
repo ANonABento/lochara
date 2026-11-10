@@ -29,7 +29,13 @@ character with no base gets a `pick` of the stock bases (CC0 VRoid samples in ve
 
 Every command takes `--json`: one JSON result on stdout (`ok`, what it showed or wrote, and `next`, the step after
 it), with its progress on stderr; a failure is `{"ok": false, "problem": ...}` and exit 1. Commands in `run` are
-argument lists for `lochara`, never shell strings.
+argument lists for `lochara`, never shell strings. Steps that wait for a person (`input`, `approve`, `done`) also
+carry `run.refresh` (`next` again).
+
+Because every choice comes with its exact command, a chat runner needs no model to move between steps: it can show
+`say` and `show`, turn each option and each `run` entry into a button, and run the filled-in command on a click.
+Choomfie's `/pipeline lochara` threads work this way; a model is only needed for the creative parts (a name, a prompt,
+drawing designs).
 
 ## In a terminal
 Open the repo in your agent and ask for what you want ("make a character from this design", "add ear units to

@@ -160,6 +160,7 @@ def test_build_render_export_done(char: Character):
     os.utime(render, (later, later))
     s = step(char)
     assert (s["waiting"], s["options"]) == ("approve", [])  # no export targets yet
+    assert s["run"] == {"refresh": ["next", "aiko"]}
 
     char.data["export"] = [{"to": "out/aiko.glb"}]
     char.save()
