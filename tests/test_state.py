@@ -82,6 +82,14 @@ def test_pick_a_stock_base(tmp_path: Path, stock: Path):
     assert step(c)["stage"] == "build"
 
 
+def test_open_request_comes_before_base(tmp_path: Path, stock: Path):
+    c = create(tmp_path / "bare", "Bare", None)
+    req = handoff.create(c, "concept", "a design", c.root / "concepts", "c-h", 2)
+    s = step(c)
+    assert (s["waiting"], s["request"]["id"]) == ("pictures", req["id"])  # the concept in flight, not the base
+    assert s["run"]["deliver"] == ["deliver", "bare", req["id"], "--from", "<folder>"]
+
+
 def test_unknown_base(tmp_path: Path, stock: Path):
     c = create(tmp_path / "bare", "Bare", None)
     with pytest.raises(Problem, match="stock bases: sample-e"):

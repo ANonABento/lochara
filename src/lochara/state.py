@@ -108,7 +108,10 @@ def _exported(c: Character, glb: Path) -> bool | None:
 
 
 def next_step(c: Character) -> dict:
-    """The first thing to do for this character, in pipeline order."""
+    """The first thing to do for this character, in pipeline order (a picture request already open comes first)."""
+    for req in handoff.open_requests(c):
+        return _request_step(c, req)
+
     base = c.path(c.data.get("base", {}).get("file"))
     if not base or not base.exists():
         stock = bases.available()
@@ -119,9 +122,6 @@ def next_step(c: Character) -> dict:
         src = c.data.get("base", {}).get("source")
         return _step(c, "base", "input",
                      f"Put a rigged base model (VRM or GLB) at {base}" + (f" (from {src})." if src else "."))
-
-    for req in handoff.open_requests(c):
-        return _request_step(c, req)
 
     for part in c.data.get("parts", []):
         step = _part_step(c, part)
