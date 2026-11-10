@@ -166,6 +166,21 @@ works here.
 | S6 springs | VRM Add-on spring chains on the skirt and hair, checked in three-vrm. | A drag test that swings. |
 | S7 LoRA | Does a character LoRA trained locally make views and expressions more consistent? | Same face across 10 pictures. |
 
+### S1 so far (2026-11-10, bastet-smol)
+- **Setup:** 4-bit Qwen-Image-Edit 2511 in mflux, plus Lightning and the angles LoRA (`<sks> <azimuth> <elevation> <distance>`).
+  - mflux won't read the angles LoRA's key names, so it's renamed to `vendor/hf/angles-lora-mflux.safetensors`.
+  - mflux applies 12 of its 14 layer types; it has no mapping for `img_mod`/`txt_mod`.
+- **Quality:**
+  - The back view is good: hair, ears, tail and gold bands all kept.
+  - The side view at 4 steps is faded and ghostly (see-through arm, grey tail). The next try is 8 steps.
+- **Memory is the blocker.** The run takes 34 GB (a 7B text encoder plus the edit model) on a 24 GB Mac.
+  - It swaps about 10 GB and takes about 13 minutes per view.
+- **Next, in order:**
+  1. Bake both LoRAs into a saved 4-bit copy (`mflux-save --bake-lora`) and measure memory and time.
+  2. A 3-bit copy (`-q 3`), compared on the same views.
+  3. If neither fits, accept slow views: an overnight batch, or a bigger machine.
+- **Baking fixes the LoRA choice.** The Lightning step count and the angles scale are set in the saved model; changing either means saving a new copy (about 20 GB of disk, a few minutes).
+
 ## Risks
 - **Anime faces from generated views** may still drift; the LoRA (S7) and painting the face on the template are the
   mitigations.
