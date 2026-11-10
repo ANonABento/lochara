@@ -65,12 +65,29 @@ def stock(tmp_path: Path, monkeypatch) -> Path:
 def test_no_base(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(bases, "FOLDER", tmp_path / "nothing")
     c = create(tmp_path / "bare", "Bare", None)
+    png(c.root / "concepts" / "c-d1.png")  # art first, so the body comes next
     s = step(c)
     assert (s["stage"], s["waiting"]) == ("base", "input")
+    assert s["run"]["refresh"] == ["next", "bare"] and s["labels"]["refresh"]
+
+
+def test_art_comes_first_and_can_be_skipped(tmp_path: Path, stock: Path):
+    c = create(tmp_path / "bare", "Bare", None)
+    s = step(c)
+    assert (s["stage"], s["waiting"]) == ("art", "pictures")
+    assert s["run"] == {"deliver": ["concept", "bare", "--from", "<folder>"], "skip": ["next", "bare", "--at", "base"]}
+    assert s["progress"][0] == {"label": "Art", "state": "now"} and s["title"] == "Bare"
+    s = state.next_step(Character(c.root), "base")
+    assert (s["stage"], s["waiting"]) == ("base", "pick")
+    assert s["run"]["art"] == ["next", "bare", "--at", "art"]
+    assert [p["state"] for p in s["progress"]] == ["done", "now", "todo", "todo"]
+    with pytest.raises(Problem, match="can't go back"):
+        state.next_step(Character(c.root), "build")
 
 
 def test_pick_a_stock_base(tmp_path: Path, stock: Path):
     c = create(tmp_path / "bare", "Bare", None)
+    png(c.root / "concepts" / "c-d1.png")
     s = step(c)
     assert (s["stage"], s["waiting"], s["options"]) == ("base", "pick", ["sample-e"])
     assert s["show"] == [str(stock / "avatarsample_e_full.png")]
@@ -79,7 +96,11 @@ def test_pick_a_stock_base(tmp_path: Path, stock: Path):
     set_base(Character(c.root), "sample-e")
     c = Character(c.root)
     assert c.data["base"]["licence"] == "CC0" and (c.root / "assets" / "AvatarSample_E.vrm").exists()
-    assert step(c)["stage"] == "build"
+    s = step(c)
+    assert s["stage"] == "build" and s["run"]["body"] == ["next", "bare", "--at", "base"]
+    s = state.next_step(c, "base")  # back to the body: still a choice, though one is made
+    assert (s["stage"], s["waiting"], s["options"]) == ("base", "pick", ["sample-e"])
+    assert state.next_step(c, "art")["run"]["skip"] == ["next", "bare"]  # past the art: skipping carries on
 
 
 def test_open_request_comes_before_base(tmp_path: Path, stock: Path):
@@ -160,7 +181,7 @@ def test_build_render_export_done(char: Character):
     os.utime(render, (later, later))
     s = step(char)
     assert (s["waiting"], s["options"]) == ("approve", [])  # no export targets yet
-    assert s["run"] == {"refresh": ["next", "aiko"]}
+    assert set(s["run"]) == {"art", "body"}  # nothing to do but go back
 
     char.data["export"] = [{"to": "out/aiko.glb"}]
     char.save()

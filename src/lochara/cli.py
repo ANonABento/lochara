@@ -374,7 +374,7 @@ def cmd_next(a):
         step = state.start([Character(f.parent) for f in all_characters()])
         print(state.describe(step))
         return {"next": step}
-    step = state.next_step(Character(find(a.character)))
+    step = state.next_step(Character(find(a.character)), a.at)
     print(state.describe(step))
     return {"next": step}
 
@@ -436,6 +436,7 @@ def main(argv=None):
     s.add_argument("character"); s.add_argument("base")
     s = command("next", "what to do next for a character (none: list them, or start one)", cmd_next)
     s.add_argument("character", nargs="?")
+    s.add_argument("--at", choices=state.AT, help="go back to an earlier choice (the art, the body), even one made")
 
     def seeds(s):
         s.add_argument("-n", type=int, default=4, help="how many candidates")

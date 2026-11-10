@@ -7,8 +7,10 @@ built on one. The agent does the work; you make the choices at each checkpoint.
 ## Where a character stands: `lochara next`
 `lochara next <character>` reads the character's folder and says the stage, what it's waiting for, what to show and
 the command to run; without a character it lists them (`pick`, run `next <option>`) or offers `new <name>`. A new
-character with no base gets a `pick` of the stock bases (CC0 VRoid samples in vendor/vroid, previews shown), run as
-`base <character> <option>`. With `--json` it's data, for a script or a chat runner:
+character first asks for art to design it from (`pictures`: `concept <character> --from <folder>`, or `skip`), then
+a `pick` of the stock bases (CC0 VRoid samples in vendor/vroid, previews shown), run as `base <character> <option>`.
+`next <character> --at art|base` goes back to one of those choices, even one already made. With `--json` it's data,
+for a script or a chat runner:
 
 ```json
 {"ok": true, "command": "next",
@@ -22,18 +24,21 @@ character with no base gets a `pick` of the stock bases (CC0 VRoid samples in ve
 |---|---|
 | `pick` | Show `show`, ask the user, run `run.pick` with their choice in place of `<option>` |
 | `approve` | Show `show`; run what `run` offers when the user agrees, or change something first |
-| `pictures` | A picture request is open (`request`: prompt, references, count, size): make them, `deliver` |
+| `pictures` | Pictures are wanted: art to design from, or an open request (`request`: prompt, references, count, size). Run `run.deliver` with a folder of them for `<folder>` |
 | `run` | Nothing to decide: run `run.next` (3D takes about 20 min) |
-| `input` | Something only a person can do: tell them `say` |
+| `input` | Something only a person can do: tell them `say`, then `run.refresh` (`next` again) |
 | `done` | Nothing left |
 
 Every command takes `--json`: one JSON result on stdout (`ok`, what it showed or wrote, and `next`, the step after
 it), with its progress on stderr; a failure is `{"ok": false, "problem": ...}` and exit 1. Commands in `run` are
-argument lists for `lochara`, never shell strings. Steps that wait for a person (`input`, `approve`, `done`) also
-carry `run.refresh` (`next` again).
+argument lists for `lochara`, never shell strings. Every other `run` key is a choice too: `art` and `body` go back
+to those steps, and steps add their own (`skip`, `redraw`, `export`).
 
-Because every choice comes with its exact command, a chat runner needs no model to move between steps: it can show
-`say` and `show`, turn each option and each `run` entry into a button, and run the filled-in command on a click.
+For a person in a chat, a step also has `title` (the character's name), `labels` (a short button label per `run`
+key) and `progress` (`[{"label": "Body", "state": "done" | "now" | "todo"}]`). Because every choice comes with its
+exact command and label, a chat runner needs no model and no knowledge of lochara to move between steps: it shows
+`say`, `show` and `progress`, turns each option and each `run` entry into a button, and runs the filled-in command
+on a click.
 Choomfie's `/pipeline lochara` threads work this way; a model is only needed for the creative parts (a name, a prompt,
 drawing designs).
 
