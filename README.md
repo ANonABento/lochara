@@ -56,7 +56,8 @@ Lost your place? `./lochara next mychar` says what's next (`./lochara next` alon
 one JSON result, for scripts and chat bots).
 
 Pictures from another tool (a hosted image model, an agent, your own art app): add `--via handoff` to `concept` or
-`part draw`, then `./lochara requests` and `./lochara deliver mychar <request-id> --from <folder>`
+`part draw`, then `./lochara requests` and `./lochara deliver mychar <request-id> --from <folder>`.
+Designs you already have go straight in: `./lochara new mychar --from <folder>` (or `concept mychar --from <folder>`)
 ([docs/agents.md](docs/agents.md)).
 
 ## What you need

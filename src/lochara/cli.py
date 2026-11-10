@@ -80,10 +80,16 @@ def cmd_new(a):
     if not a.path and not NAME.match(a.name):
         raise Problem(f"name {a.name!r}: use lowercase letters, digits and - (it becomes the folder name)")
     root = Path(a.path) if a.path else REPO / "characters" / a.name
+    if a.source:
+        designs = pictures_in(a.source)  # checked before anything is made
     c = create(root, a.title or a.name, a.base)
+    out = {"wrote": [str(c.file)]}
+    if a.source:
+        out = add_designs(c, designs, "c", a.prompt)
+        out["wrote"].insert(0, str(c.file))
     step = state.next_step(c)
     print(f"made {c.root}\n{state.describe(step)}")
-    return {"wrote": [str(c.file)], "next": step}
+    return {**out, "next": step}
 
 
 def cmd_base(a):
@@ -108,8 +114,32 @@ def seeds_for(a) -> list[int]:
     return a.seeds or random.sample(range(1, 100000), a.n)
 
 
+def add_designs(c: Character, files: list[Path], tag: str, prompt: str | None) -> dict:
+    """Keep pictures drawn elsewhere (by the agent in the chat, by hand) as concepts: <tag>-d<n>, numbered on."""
+    out = c.root / "concepts"
+    out.mkdir(parents=True, exist_ok=True)
+    if prompt:
+        (out / f"{tag}-prompt.txt").write_text(prompt + "\n")
+    n = len(list(out.glob(f"{tag}-d*")))
+    placed = []
+    for f in files:
+        n += 1
+        dest = out / f"{tag}-d{n}{f.suffix.lower()}"
+        shutil.copyfile(f, dest)
+        placed.append(dest)
+        print(f"  {dest}")
+    every = sorted(p for p in out.glob(f"{tag}-*") if p.suffix.lower() in state.PICTURE_EXTS and p.stem != f"{tag}-sheet")
+    s = pictures.sheet(every, out / f"{tag}-sheet.png", tile=384)
+    print(f"sheet: {s}")
+    return {"wrote": [str(p) for p in placed], "show": [str(s)]}
+
+
 def cmd_concept(a):
     c = Character(find(a.character))
+    if a.source:
+        return add_designs(c, pictures_in(a.source), a.tag, a.prompt)
+    if not a.prompt:
+        raise Problem("describe the design: lochara concept <character> \"<prompt>\" (or keep pictures with --from <folder>)")
     prompt = f"{a.prompt}. {pictures.CONCEPT_STYLE}" if not a.raw else a.prompt
     out = c.root / "concepts"
     out.mkdir(parents=True, exist_ok=True)
@@ -302,14 +332,20 @@ def cmd_requests(a):
     return {"requests": reqs}
 
 
+def pictures_in(source: str) -> list[Path]:
+    """Every picture in a folder, in name order."""
+    folder = Path(source)
+    if not folder.is_dir():
+        raise Problem(f"not a folder: {folder}")
+    files = sorted(p for p in folder.iterdir() if p.suffix.lower() in state.PICTURE_EXTS)
+    if not files:
+        raise Problem(f"no pictures in {folder}")
+    return files
+
+
 def delivered_files(a) -> list[Path]:
     """The files named, plus every picture in --from (in name order)."""
-    files = [Path(f) for f in a.files]
-    if a.source:
-        folder = Path(a.source)
-        if not folder.is_dir():
-            raise Problem(f"not a folder: {folder}")
-        files += sorted(p for p in folder.iterdir() if p.suffix.lower() in state.PICTURE_EXTS)
+    files = [Path(f) for f in a.files] + (pictures_in(a.source) if a.source else [])
     if not files:
         raise Problem("nothing to deliver: name the files, or a folder with --from")
     return files
@@ -362,7 +398,8 @@ def run_json(a) -> int:
             try:
                 out["next"] = state.next_step(Character(find(character)))
             except Problem:
-                pass
+                if NAME.match(character):
+                    out["next"] = state.missing(character)
     finally:
         sys.stdout.flush()
         os.dup2(saved, 1)
@@ -392,6 +429,8 @@ def main(argv=None):
     s = command("new", "make a character folder", cmd_new)
     s.add_argument("name"); s.add_argument("--base", help="a stock base by name, or a rigged VRM/GLB to start from (copied into assets/)")
     s.add_argument("--title"); s.add_argument("--path", help="where (default characters/<name>)")
+    s.add_argument("--from", dest="source", help="keep every picture in this folder as its design (drawn elsewhere)")
+    s.add_argument("--prompt", help="with --from: what the design pictures show")
     command("list", "list characters", cmd_list)
     s = command("base", "set a character's base body: a stock base by name, or a VRM/GLB file", cmd_base)
     s.add_argument("character"); s.add_argument("base")
@@ -409,7 +448,8 @@ def main(argv=None):
         s.add_argument("--ref", nargs="+", help="reference pictures for a handoff (the design)")
 
     s = command("concept", "draw full-body concepts", cmd_concept)
-    s.add_argument("character"); s.add_argument("prompt"); s.add_argument("--tag", default="c")
+    s.add_argument("character"); s.add_argument("prompt", nargs="?"); s.add_argument("--tag", default="c")
+    s.add_argument("--from", dest="source", help="keep every picture in this folder as concepts instead of drawing")
     seeds(s); via(s)
 
     s = command("part", "draw / pick / model a part", cmd_part)

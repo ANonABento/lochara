@@ -208,3 +208,42 @@ def test_deliver_from_folder(char: Character, tmp_path: Path):
     assert [Path(p).name for p in out["wrote"]] == ["h1.jpg", "h2.png"]
     assert out["next"]["waiting"] == "pick"  # every --json result carries the next step
     assert out["next"]["options"] == ["h1", "h2"]
+
+
+def test_missing_character_points_to_new(tmp_path: Path):
+    """What Waymond did: delivered drawn designs for a character it hadn't made yet."""
+    made = tmp_path / "made"
+    png(made / "design_1.png")
+    r = lochara("deliver", "zz-nobody", "c-h", "--from", str(made), "--json")
+    out = json.loads(r.stdout)
+    assert out["ok"] is False and out["problem"].startswith("no character")
+    assert out["next"]["run"]["next"] == ["new", "zz-nobody"]
+    assert "--from" in out["next"]["say"]
+
+
+def test_new_with_designs(tmp_path: Path):
+    made = tmp_path / "made"
+    png(made / "design_1.png")
+    png(made / "design_2.png")
+    (made / "meta.json").write_text("{}")
+    root = tmp_path / "mika"
+    r = lochara("new", "mika", "--path", str(root), "--from", str(made), "--prompt", "a maid", "--json")
+    out = json.loads(r.stdout)
+    assert out["ok"], r.stderr
+    assert sorted(Path(p).name for p in out["wrote"][1:]) == ["c-d1.png", "c-d2.png"]
+    assert out["show"] == [str(root / "concepts" / "c-sheet.png")]
+    assert (root / "concepts" / "c-prompt.txt").read_text() == "a maid\n"
+    assert out["next"]["stage"] == "base"
+
+    png(made / "design_3.png")  # more designs later number on
+    r = lochara("concept", str(root), "--from", str(made), "--json")
+    out = json.loads(r.stdout)
+    assert out["ok"], r.stderr
+    assert [Path(p).name for p in out["wrote"]] == ["c-d3.png", "c-d4.png", "c-d5.png"]
+
+
+def test_new_with_no_pictures_makes_nothing(tmp_path: Path):
+    (tmp_path / "empty").mkdir()
+    r = lochara("new", "zz", "--path", str(tmp_path / "zz"), "--from", str(tmp_path / "empty"), "--json")
+    assert json.loads(r.stdout)["problem"].startswith("no pictures")
+    assert not (tmp_path / "zz").exists()

@@ -162,6 +162,14 @@ def start(characters: list[Character]) -> dict:
             "say": f"Characters: {', '.join(ids)}. Continue one, or start a new one with `new <name>`."}
 
 
+def missing(name: str) -> dict:
+    """A command named a character that doesn't exist yet."""
+    return {"character": None, "stage": "start", "waiting": "run", "show": [], "options": [],
+            "run": {"next": ["new", name]},
+            "say": f"There's no character {name} yet. Make it first: `new {name}` (add `--from <folder>` to keep "
+                   "design pictures you already have)."}
+
+
 def describe(step: dict) -> str:
     """The step as text for a person."""
     lines = [f"{step['character'] or 'lochara'}: {step['stage']} ({step['waiting']})", f"  {step['say']}"]

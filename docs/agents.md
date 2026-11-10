@@ -74,5 +74,13 @@ ask_brain(brain="waymond", chat_id=<this chat>,
 → attach the sheet to the reply; the user picks
 ```
 
+**Designs you already have:** an agent that draws in the chat (Waymond) needn't open a request first. Keep its
+pictures as the design in one step, making the character too if it's new:
+
+```sh
+lochara new mika --from <folder> --prompt "what they show"   # a new character, designs kept as concepts/c-d1, c-d2…
+lochara concept mika --from <folder>                          # more designs for one that exists (numbered on)
+```
+
 Hosted models upload your design to that service and can't be re-run exactly (no seeds). Local drawing stays the
 default; the recipe records which way each picture was made.
