@@ -1,7 +1,7 @@
 # Research: character pipelines and tools
 
 What we looked at for building a rigged web character from scratch, and what we took from each. Last updated
-2026-11-08.
+2026-11-10.
 
 ## What went wrong before (October 2026, in BentoSite)
 About 40 commits tried to get one anime maid out of FLUX → TRELLIS in one pass. Generating the whole body at once
@@ -110,6 +110,34 @@ shape keys and hair and skirts on spring bones.
   and colliders are limited on mobile. Uploads go through Unity and VRChat's SDK.
 - **VTubing apps** read VRM; some (VSeeFace) only VRM 0.x. iPhone "perfect sync" tracking needs the 52 ARKit shapes.
 
+## Revisit after S2 (2026-11-10)
+The S2 models (Pixal3D, Hunyuan3D-2mv) of bastet-smol weren't good enough. Why, and what others do:
+- **We broke our own rule.** S2 fed the engines the whole character, so the face came out lumpy and the hair, dress
+  and body fused: the October lesson again. The plan only generates hair, outfit and accessories, each on its own;
+  the face and body come from the VRoid template.
+- **The views were off-spec:** the design is in an A-pose (the rules want a T-pose with a gap between the shoes), and
+  the heads cropped from the body views are only about 270 px.
+- **The best engines aren't local on a Mac:** Tripo and Rodin are cloud; TRELLIS.2, StdGEN, PartCrafter and HairDeck
+  need an NVIDIA GPU.
+- **How others get good results:**
+  - Charakuru: head with hair and body generated separately, Tripo candidates picked by a person, Tripo's part split
+    and retexture, weights from a hand-weighted body.
+  - VRChat and VTuber creators: mostly VRoid Studio for hair and outfit, textures painted from the design; AI 3D is
+    used for props.
+  - 2026 comparisons: Tripo fastest and best for stylized models, Rodin most detail (more cleanup), Hunyuan3D the
+    best open option. None test VRM.
+- **New research that fits:**
+  - **HairDeck** (Nov 2026, Apache-2.0): anime hair cards with spring bones from one picture, exported as VRM.
+    Linux and an NVIDIA GPU only (PyTorch 2.8, CUDA 12.8); SAM 3 and DINOv3 are gated downloads.
+  - **Anime-Ready** (ICLR 2026): garments fitted to an anime body, piece by piece. No code yet.
+  - CharacterGen (SIGGRAPH 2024, multiview, no parts), CHARM (anime hair, superseded by HairDeck), See-through
+    (SIGGRAPH 2026, splits an anime picture into up to 23 2D layers: could mask hair and outfit for the views).
+- **Next, in order:**
+  1. Rerun S2 the planned way: Pixal3D on the hair alone (head views, face masked) and the outfit alone, from T-pose
+     views; face and body from the VRoid template.
+  2. If the hair is still weak, rent a cloud NVIDIA GPU for HairDeck (and TRELLIS.2).
+  3. Fallbacks: Tripo as Charakuru uses it (about $20 for a month of Pro), or hair and outfit by hand in VRoid Studio.
+
 ## Sources
 - https://github.com/nanocle/Charakuru (README, docs/tutorial.md, docs/license.md)
 - https://github.com/Bingeljell/image-to-3dlab
@@ -124,3 +152,14 @@ shape keys and hair and skirts on spring bones.
 - https://docs.comfy.org/tutorials/3d/hunyuan3d-2
 - https://wiki.vrchat.com/wiki/Avatar_Performance_Ranking
 - https://www.3daistudio.com/blog/best-ai-tools-for-vrchat-vtuber-avatars-2026
+- https://github.com/hyz317/HairDeck/wiki
+- https://comfyui-wiki.com/en/news/2026-11-02-hairdeck
+- https://explainx.ai/blog/hairdeck-hair-cards-single-image-tsinghua-2026
+- https://en.papernotes.org/ICLR2026/3d_vision/anime-ready_controllable_3d_anime_character_generation_with_body-aligned_compone/
+- https://github.com/zjp-shadow/CharacterGen
+- https://github.com/hyz317/CHARM
+- https://github.com/shitagaki-lab/see-through
+- https://www.3daistudio.com/blog/best-ai-3d-character-and-avatar-generators-2026
+- https://zeroatoms.com/blog/ai-3d-model-generators-for-games
+- https://ideate.xyz/blogs/posts/ai-3d-model-comparison-trellis-tripo-meshy-rodin-hunyuan
+- https://www.vitalify.asia/en/blog/ai-image-to-3d-generators-comparison

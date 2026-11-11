@@ -199,6 +199,9 @@ works here.
   setting. `vendor/comfyui/comfy/ldm/trellis2/model.py` `_sample_features` now falls back to the CPU on that error
   (the original is `model.py.orig`). A ComfyUI update will undo the patch.
 - **Both are one fused mesh:** hair, body and dress need splitting (S3).
+- **Verdict: not good enough, and not a fair test.** It fed the whole character, against this plan (face and body
+  from the template; hair, outfit and parts generated each on its own), from A-pose views. Redo S2 that way before S3
+  (`docs/research.md`, "Revisit after S2").
 
 ## Risks
 - **Anime faces from generated views** may still drift; the LoRA (S7) and painting the face on the template are the
