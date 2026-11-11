@@ -49,12 +49,15 @@ def main() -> None:
     ap.add_argument("--model", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--only", nargs="*", choices=list(VIEWS))
+    ap.add_argument("--prompt", nargs="*", default=[], metavar="NAME=TEXT",
+                    help="free edits instead of views, e.g. tpose='put her in a T-pose' (no angle tag)")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--steps", type=int, default=8)
     ap.add_argument("--width", type=int, default=768)
     ap.add_argument("--height", type=int, default=1152)
     a = ap.parse_args()
-    views = {k: VIEWS[k] for k in (a.only or VIEWS)}
+    views = ({k: v for k, v in (x.split("=", 1) for x in a.prompt)} if a.prompt
+             else {k: f"<sks> {VIEWS[k]}" for k in (a.only or VIEWS)})
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     images = [a.design]
@@ -70,7 +73,7 @@ def main() -> None:
     tok = model.tokenizers["qwen_vl"]
     embeds = {}
     for name, angle in views.items():
-        ids, mask, pixels, grid = tok.tokenize_with_image(f"<sks> {angle}", images, vl_width=vl_w, vl_height=vl_h)
+        ids, mask, pixels, grid = tok.tokenize_with_image(angle, images, vl_width=vl_w, vl_height=vl_h)
         h = model.qwen_vl_encoder(input_ids=ids, attention_mask=mask, pixel_values=pixels, image_grid_thw=grid)
         embeds[name] = (h[0].astype(mx.float16), h[1].astype(mx.float16))
         mx.eval(embeds[name])
@@ -105,7 +108,7 @@ def main() -> None:
         decoded = VAEUtil.decode(vae=model.vae, latent=QwenLatentCreator.unpack_latents(
             latents=latents, height=config.height, width=config.width), tiling_config=model.tiling_config)
         took = time.time() - t1
-        ImageUtil.to_image(decoded_latents=decoded, config=config, seed=a.seed, prompt=f"<sks> {views[name]}",
+        ImageUtil.to_image(decoded_latents=decoded, config=config, seed=a.seed, prompt=views[name],
                            quantization=model.bits, lora_paths=None, lora_scales=None, image_path=None,
                            image_paths=images, generation_time=took).save(out / f"{name}.png")
         print(f"{name}: {took:.0f}s, peak {mx.get_peak_memory() / GB:.1f} GB", flush=True)

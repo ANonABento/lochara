@@ -203,6 +203,23 @@ works here.
   from the template; hair, outfit and parts generated each on its own), from A-pose views. Redo S2 that way before S3
   (`docs/research.md`, "Revisit after S2").
 
+### S2 redo: hair (2026-11-11, bastet-smol)
+- **T-pose first:** `s1_views.py --prompt tpose="Change her pose to a T-pose…"` on the design (9 min, 1024²), then the
+  right, back and left views from that T-pose (about 10 min each). All four agree; side views have speckled
+  backgrounds that BiRefNet removes.
+- **Head crops:** the top 300 px around the hair, upscaled to 1024 (`characters/bastet-smol/views/tpose/head/`).
+- **Pixal3D, detail at 1024** (`--set 94.target_resolution=1024`). At the template's 1536 a frame-filling head
+  needed 30 GB of swap and ran about 17 min a step; at 1024 it took 39 min with about 22 GB of swap.
+- **Left and right are swapped between the tools.** The angles LoRA's "left side view" shows her right side
+  (face pointing right of the picture); Pixal3D's `left` slot wants the face pointing left. Fed as named, the model
+  grew a second face on the back of the head. Fed swapped (`341=body-right 345=body-left`), the back is clean hair.
+  This is likely why the whole-body Pixal3D model faced the wrong way.
+- **Result** (`vendor/comfyui/output/3d/bastet-hair-swap_00001.glb`): the bob, bangs, side lengths, back strands
+  and the cat ears with gold insides all match the design from every side. The face is poor (a beak nose), which
+  is fine, since the face comes from the template. 700k triangles, faceted; it needs simplifying.
+- **Verdict: the hair passes as a shape.** Next: mask the face and neck so it comes out as hair only, then fit it on
+  the template head (S5) to judge it on the body.
+
 ## Risks
 - **Anime faces from generated views** may still drift; the LoRA (S7) and painting the face on the template are the
   mitigations.
