@@ -6,7 +6,7 @@ design, for the web, VTubing and VRChat.
 | | Milestone | Status |
 |---|---|---|
 | M0 | **Restyle route**: a rigged base (VRoid) styled by a recipe, generated rigid parts on bones, contract and budget checks, GLB export. CLI, docs, skills, two examples. | Done |
-| M1 | **Spikes** S1–S7 (setup done) for the design route: views, 3D hair and outfit, split, paint, fit and rig on a template, springs, a character LoRA. | S1 running: views work, memory is the blocker ([plan](generated-character.md#s1-so-far-2026-11-10-bastet-smol), [setup](#setup-for-m1)) |
+| M1 | **Spikes** S1–S7 (setup done) for the design route: views, 3D hair and outfit, split, paint, fit and rig on a template, springs, a character LoRA. | S1: body views pass (9.5 min each); heads cropped from them ([plan](generated-character.md#s1-so-far-2026-11-10-bastet-smol), [setup](#setup-for-m1)) |
 | M2 | **Design route, commands**: `views`, `model`, `split`, `paint`, `fit`, `rig`, `springs`, the `anime-avatar` profile. | After M1 |
 | M3 | **Targets**: web and VTuber (VRM 1.0 and 0.x) first, then VRChat PC and Quest. | With M2 ([plan](targets.md)) |
 | M4 | **Robot maid v2**: Kevin's design, shipped to BentoSite (and as a VRM). | Design in progress ([plan](maid-v2.md)) |

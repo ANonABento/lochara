@@ -167,19 +167,23 @@ works here.
 | S7 LoRA | Does a character LoRA trained locally make views and expressions more consistent? | Same face across 10 pictures. |
 
 ### S1 so far (2026-11-10, bastet-smol)
-- **Setup:** 4-bit Qwen-Image-Edit 2511 in mflux, plus Lightning and the angles LoRA (`<sks> <azimuth> <elevation> <distance>`).
-  - mflux won't read the angles LoRA's key names, so it's renamed to `vendor/hf/angles-lora-mflux.safetensors`.
-  - mflux applies 12 of its 14 layer types; it has no mapping for `img_mod`/`txt_mod`.
-- **Quality:**
-  - The back view is good: hair, ears, tail and gold bands all kept.
-  - The side view at 4 steps is faded and ghostly (see-through arm, grey tail). The next try is 8 steps.
-- **Memory is the blocker.** The run takes 34 GB (a 7B text encoder plus the edit model) on a 24 GB Mac.
-  - It swaps about 10 GB and takes about 13 minutes per view.
-- **Next, in order:**
-  1. Bake both LoRAs into a saved 4-bit copy (`mflux-save --bake-lora`) and measure memory and time.
-  2. A 3-bit copy (`-q 3`), compared on the same views.
-  3. If neither fits, accept slow views: an overnight batch, or a bigger machine.
-- **Baking fixes the LoRA choice.** The Lightning step count and the angles scale are set in the saved model; changing either means saving a new copy (about 20 GB of disk, a few minutes).
+- **Setup:** 4-bit Qwen-Image-Edit 2511 in mflux, plus Lightning 8-step and the angles LoRA (`<sks> <azimuth> <elevation> <distance>`).
+  - Both LoRAs are baked into `vendor/hf/qwen-edit-2511-views-q4` (`mflux-save --bake-lora`, 33 GB). The pictures are
+    the same as with the LoRAs loaded at run time.
+  - mflux won't read the angles LoRA's key names, so it's renamed first (`vendor/hf/angles-lora-mflux.safetensors`).
+    It applies 12 of its 14 layer types; mflux has no mapping for `img_mod`/`txt_mod`.
+- **Runner:** `spikes/s1_views.py` encodes every view's prompt, then drops the 14 GB text encoder (mflux never
+  quantizes it). It runs the image model once per step: at guidance 1 the negative pass changes nothing.
+  - One 768×1152 view: 9.5 min, against 22 min with `mflux-generate-qwen-edit`. Peak is about 25 GB, but swap doesn't
+    grow, so the limit now is the M5's 10-core GPU (about 70 s per step), not memory.
+- **Results:**
+  - **Body views pass.** Front, right, back and left all match the design and each other: the tail, bands, collar
+    and sandals are right from every side.
+  - 4 steps fade and ghost the harder angles. 8 steps are clean.
+  - **Head views:** "close-up" doesn't reframe a full-body picture, and a head cropped from the design fails (ghosted,
+    no turn). The heads cropped from the body views are clean and consistent, but only about 270 px; upscale them
+    (`mflux-upscale-seedvr2`) if S2 needs more.
+- **Left to check:** the T-pose (the design is an A-pose), and a second design.
 
 ## Risks
 - **Anime faces from generated views** may still drift; the LoRA (S7) and painting the face on the template are the
