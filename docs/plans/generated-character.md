@@ -185,6 +185,21 @@ works here.
     (`mflux-upscale-seedvr2`) if S2 needs more.
 - **Left to check:** the T-pose (the design is an A-pose), and a second design.
 
+### S2 so far (2026-11-10, bastet-smol)
+- **Runner:** `spikes/comfy_run.py` runs a ComfyUI template through the API, with pictures and settings swapped in.
+  It turns the editor's lists of values into named inputs, and runs the side views the templates switch off.
+- **Input:** the 4 body views from S1 (Hunyuan gets them cut out on white; Pixal3D cuts them out itself with BiRefNet).
+- **Hunyuan3D-2mv:** 11.5 min, 186k triangles, shape only.
+  - The shape matches the design from every side, and the tail is its own piece.
+  - The skirt is streaky and fused to the legs; the face and bands are mush.
+- **Pixal3D (picked):** 13.5 min, 700k triangles (44 MB), shape and colour.
+  - The colours match the design, the face, headband and bands are readable, the skirt is clean and the legs separate.
+  - It needs simplifying, and its front faces the other way from Hunyuan's.
+- **Pixal3D needs a ComfyUI patch on a Mac.** Its colour step's `grid_sample` overflows int32 on MPS, at any detail
+  setting. `vendor/comfyui/comfy/ldm/trellis2/model.py` `_sample_features` now falls back to the CPU on that error
+  (the original is `model.py.orig`). A ComfyUI update will undo the patch.
+- **Both are one fused mesh:** hair, body and dress need splitting (S3).
+
 ## Risks
 - **Anime faces from generated views** may still drift; the LoRA (S7) and painting the face on the template are the
   mitigations.
